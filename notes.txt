@@ -1,0 +1,55 @@
+https://sykatiya-my.sharepoint.com/:p:/p/midhun_a/ESE0Nwz3UrdGkKpt_qtyu6ABmYowP1_EjkR5KyeBupWWig?e=WQmsyv
+
+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
+
+
+OPENAI_API_KEY=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
+
+cd C:\Users\midhu\KnowledgeBot\code_base
+
+curl http://localhost:11434/api/version
+
+python build_knowledge_db.py
+
+
+Every time - work on the project, run 
+
+venv\Scripts\activate
+
+python3 -m venv venv
+source venv/bin/activate
+
+To build knowledge DB 
+python build_knowledge_db.py
+
+to run the project
+python -m streamlit run app.py
+
+
+
+Ollama PID 
+sudo lsof -i:11434
+
+Ollama Process Kill
+sudo kill -9 <PID>
+
+Restart Ollama
+ollama serve
+
+taskkill /PID 7860 /F
+
+C:\Users\midhu\VirtualBox VMs\Ubuntu 22.4\Ubuntu 22.4.vdi
+
+VBoxManage modifyhd "C:\Users\midhu\VirtualBox VMs\Ubuntu 22.4\Ubuntu 22.4.vdi" --resize 100000
+
+
+https://www.loom.com/share/03548020cb75417db191e614f6b19f10?sid=66cc33cc-10db-45cf-aad6-7df657880eea
+
+to stop ollama service
+sudo systemctl stop ollama.service
+
+
+
+taskkill /F /IM ollama.exe
+taskkill /F /IM "ollama app.exe"
+
