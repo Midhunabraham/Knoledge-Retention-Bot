@@ -1,0 +1,21 @@
+# Ignore Python venv
+venv/
+code_base/venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore DLL, EXE, etc.
+*.dll
+*.exe
+*.pyd
+
+# Ignore large files
+*.zip
+*.tar
+*.bin
+
+# Ignore models
+*.pt
+*.pth
