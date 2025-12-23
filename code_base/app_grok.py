@@ -1,275 +1,206 @@
-# app.py
-"""
-Knowledge Retention & Training Bot
-Streamlit + ChromaDB (local vectors) + Grok LLM
-"""
-
-import os
-import io
-import uuid
-from typing import List, Dict, Tuple
-
 import streamlit as st
-import chromadb
-from chromadb.utils import embedding_functions
-from pypdf import PdfReader
-import requests
-import traceback
+import base64
+from core.config import APP_TITLE, EMBED_MODEL, PERSIST_DIR, COLLECTION_NAME, GROQ_MODEL
+from core import file_readers, chroma_store, prompt_builder, llm_groq
+from core.ui import render_header
+
+# Clear chat if logo clicked
+if st.query_params.get("clear_chat"):
+    st.session_state.messages = []
+    st.query_params.clear()
+
+st.set_page_config(
+    page_title="SyBot",
+    layout="wide"
+)
 
 # ---------------------------
-# App Constants & Helpers
+# Streamlit UI Setup
 # ---------------------------
-APP_TITLE = "Knowledge Retention & Training Bot (Prototype)"
-PERSIST_DIR = ".chroma"
-COLLECTION_NAME = "company_knowledge"
-EMBED_MODEL = "all-MiniLM-L6-v2"
-DEFAULT_TOP_K = 4
-MAX_CHARS_PER_CHUNK = 1000        # chunk truncation before summarization
-MAX_TOTAL_CONTEXT_CHARS = 500     # max context sent to Grok
-SUMMARIZE_THRESHOLD = 600         # summarize chunks longer than this
 
-# Grok API config
-GROK_API_URL = "https://api.grok.x.ai/v1"
-GROK_MODEL = "grok-13b"           # choose your model
-GROK_API_KEY = os.environ.get("GROK_API_KEY")
+# ---------- LOGO ----------
+def get_base64_image(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-# sentence-transformers is optional but recommended
-try:
-    from sentence_transformers import SentenceTransformer
-except Exception:
-    SentenceTransformer = None
+logo_base64 = get_base64_image("assets/logo.png")
 
+st.markdown(
+    f"""
+    <style>
+        .sybot-logo {{
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            width: 56px;
+            z-index: 1000;
+            cursor: pointer;
+        }}
+    </style>
 
+    <a href="?clear_chat=true">
+        <img class="sybot-logo" src="data:image/png;base64,{logo_base64}">
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
+render_header()
 # ---------------------------
-# Embedder & Chroma
+# Sidebar & Settings
 # ---------------------------
-@st.cache_resource(show_spinner=False)
-def get_embedder(model_name: str = EMBED_MODEL):
-    """
-    Returns (model, embedding_function_for_chroma)
-    """
-    if SentenceTransformer is None:
-        raise RuntimeError(
-            "sentence-transformers is not installed. Run: pip install sentence-transformers"
-        )
-    model = SentenceTransformer(model_name)
+def get_base64_image(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-    class _EmbedFunc(embedding_functions.EmbeddingFunction):
-        def __init__(self):
-            super().__init__()
-
-        def __call__(self, texts: List[str]) -> List[List[float]]:
-            vecs = model.encode(texts, normalize_embeddings=True, convert_to_numpy=True)
-            return vecs.tolist()
-
-    return model, _EmbedFunc()
-
-
-@st.cache_resource(show_spinner=False)
-def get_chroma_client(persist_dir: str = PERSIST_DIR):
-    os.makedirs(persist_dir, exist_ok=True)
-    return chromadb.PersistentClient(path=persist_dir)
-
-
-def split_text(text: str, max_chars: int = MAX_CHARS_PER_CHUNK) -> List[str]:
-    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
-    chunks, buf = [], []
-    size = 0
-    for p in paras:
-        if size + len(p) > max_chars and buf:
-            chunks.append("\n\n".join(buf))
-            buf, size = [p], len(p)
-        else:
-            buf.append(p)
-            size += len(p)
-    if buf:
-        chunks.append("\n\n".join(buf))
-    return chunks
-
-
-def read_pdf(file: io.BytesIO) -> str:
-    reader = PdfReader(file)
-    texts = []
-    for page in reader.pages:
-        try:
-            texts.append(page.extract_text() or "")
-        except Exception:
-            continue
-    return "\n".join(texts)
-
-
-def extract_text_from_upload(upload) -> Tuple[str, str]:
-    name = upload.name
-    data = upload.read()
-    ext = os.path.splitext(name.lower())[1]
-    if ext in [".pdf"]:
-        return read_pdf(io.BytesIO(data)), name
-    else:
-        try:
-            return data.decode("utf-8", errors="ignore"), name
-        except Exception:
-            return "", name
-
-
-def ensure_collection(client: chromadb.ClientAPI, embed_fn) -> chromadb.Collection:
-    try:
-        col = client.get_collection(COLLECTION_NAME)
-    except Exception:
-        col = client.create_collection(COLLECTION_NAME, embedding_function=embed_fn)
-        return col
-    try:
-        col = client.get_collection(COLLECTION_NAME, embedding_function=embed_fn)
-    except Exception:
-        pass
-    return col
-
-
-def add_document(chroma_col: chromadb.Collection, text: str, meta: Dict):
-    if not text.strip():
-        return 0
-    chunks = split_text(text)
-    ids = [str(uuid.uuid4()) for _ in chunks]
-    chroma_col.add(documents=chunks, metadatas=[meta] * len(chunks), ids=ids)
-    return len(chunks)
-
-
-def retrieve(chroma_col: chromadb.Collection, query: str, top_k: int = DEFAULT_TOP_K):
-    res = chroma_col.query(
-        query_texts=[query],
-        n_results=top_k,
-        include=["documents", "metadatas", "distances"]
-    )
-    docs = res.get("documents", [[]])[0]
-    metas = res.get("metadatas", [[]])[0]
-    dists = res.get("distances", [[]])[0]
-    ids = [str(i) for i in range(len(docs))]
-    return list(zip(docs, metas, dists, ids))
-
-
-# ---------------------------
-# Grok API Call
-# ---------------------------
-def call_grok(system_prompt: str, user_prompt: str, model: str = GROK_MODEL, timeout: int = 120) -> str:
-    if not GROK_API_KEY:
-        return "❗ GROK_API_KEY not set. Please set your environment variable."
-
-    headers = {
-        "Authorization": f"Bearer {GROK_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "model": model,
-        "input": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "max_tokens": 1024,
-        "temperature": 0.2,
-    }
-
-    try:
-        resp = requests.post(f"{GROK_API_URL}/chat/completions", json=payload, headers=headers, timeout=timeout)
-        resp.raise_for_status()
-        data = resp.json()
-        if "choices" in data and isinstance(data["choices"], list) and data["choices"]:
-            return data["choices"][0]["message"]["content"]
-        return str(data)
-    except Exception as e:
-        tb = traceback.format_exc()
-        return f"❗ Unable to call Grok API: {e}\nTraceback:\n{tb}"
-
-
-# ---------------------------
-# Summarization & Prompt Building
-# ---------------------------
-def summarize_chunk(chunk: str) -> str:
-    if len(chunk) <= SUMMARIZE_THRESHOLD:
-        return chunk
-    system_prompt = "You are a helpful assistant. Summarize the following text in concise key points."
-    user_prompt = f"Text:\n{chunk}"
-    summary = call_grok(system_prompt, user_prompt)
-    return summary[:MAX_CHARS_PER_CHUNK]
-
-
-def build_prompt(question: str, hits: List[Tuple[str, Dict, float, str]]) -> Tuple[str, str]:
-    sources_block = []
-    total_chars = 0
-    for i, (doc, meta, dist, _id) in enumerate(hits, start=1):
-        title = meta.get("source", "Uploaded Doc") if isinstance(meta, dict) else "Uploaded Doc"
-        chunk_text = summarize_chunk(doc)
-        if total_chars + len(chunk_text) > MAX_TOTAL_CONTEXT_CHARS:
-            remaining = MAX_TOTAL_CONTEXT_CHARS - total_chars
-            if remaining <= 0:
-                break
-            chunk_text = chunk_text[:remaining]
-        sources_block.append(f"[S{i}] {title}\n{chunk_text}")
-        total_chars += len(chunk_text)
-        if total_chars >= MAX_TOTAL_CONTEXT_CHARS:
-            break
-
-    context = "\n\n".join(sources_block) if sources_block else "No context available."
-    system = (
-        "You are an internal company knowledge assistant. Answer clearly and concisely. "
-        "Cite sources as [S1], [S2]. If the answer is not in the provided context, say you don't know."
-    )
-    user = f"Question: {question}\n\nContext:\n{context}"
-    return system, user
-
-
-# ---------------------------
-# Streamlit UI
-# ---------------------------
-st.set_page_config(page_title=APP_TITLE, page_icon="📚", layout="wide")
-st.title(APP_TITLE)
-st.caption("RAG prototype — upload company docs/logs, then ask questions. Documents are embedded locally.")
-
+logo_base64 = get_base64_image("assets/logo.png")
 with st.sidebar:
+
+# ---------- SIDEBAR FIXED LOGO ----------
+    st.markdown(
+        f"""
+        <style>
+            /* Fix sidebar logo at top */
+            [data-testid="stSidebar"] {{
+                padding-top: 90px;
+            }}
+
+            .sidebar-logo {{
+                position: fixed;
+                top: 12px;
+                left: 16px;
+                width: 80px;
+                z-index: 200;
+                background-color: white;
+                padding: 6px 10px;
+                border-radius: 8px;
+            }}
+        </style>
+
+        <div class="sidebar-logo">
+            <img src="data:image/png;base64,{logo_base64}" width="140">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.subheader("API Setup")
+    
+    # 1. Try to load from secrets.toml first
+    secret_key = st.secrets.get("GROQ_API_KEY")
+    
+    if secret_key:
+        st.success("✅ API Key loaded")
+        active_key = secret_key
+    else:
+        api_key_input = st.text_input("Groq API Key", type="password", help="Get one at console.groq.com")
+        active_key = api_key_input
+
+    if not active_key:
+        st.warning("⚠️ Please provide a Groq API Key.")
+
+    st.markdown("---")
     st.subheader("Settings")
-    top_k = st.slider("Top-K Context Chunks", 1, 5, 2)
+    
+    # Model Selection
+    selected_model = st.selectbox(
+        "Model", 
+        [
+            "llama-3.3-70b-versatile",   # Newest, smartest
+            "llama-3.1-70b-versatile",   # Previous stable
+            "llama-3.1-8b-instant",      # Super fast
+            "mixtral-8x7b-32768"         # Large context
+        ],
+        index=0
+    )
+    
+    top_k = st.slider("Top-K Context Chunks", 1, 10, 3)
+
+    st.markdown("---")
+    st.subheader("Data Connectors")
+    
+    # --- GMAIL INTEGRATION ---
+    if st.button("📥 Import Recent Emails (Gmail)"):
+        # We need to initialize the DB client first to add documents
+        try:
+            _, embed_fn_temp = chroma_store.get_embedder(EMBED_MODEL)
+            client_temp = chroma_store.get_chroma_client(PERSIST_DIR)
+            collection_temp = chroma_store.ensure_collection(client_temp, embed_fn_temp)
+            
+            with st.spinner("Connecting to Gmail... (Check browser popup)"):
+                # Import here to avoid startup errors if libraries are missing
+                from core import gmail_connector
+                
+                status, emails = gmail_connector.fetch_recent_emails(max_count=20)
+                
+                if status == "MISSING_CREDS":
+                    st.error("❌ 'credentials.json' missing! Download it from Google Cloud Console.")
+                elif status == "SUCCESS":
+                    count = 0
+                    for email in emails:
+                        chroma_store.add_document(collection_temp, email['text'], email['meta'])
+                        count += 1
+                    st.success(f"✅ Indexed {count} emails!")
+                else:
+                    st.error("Failed to fetch emails.")
+                    
+        except ImportError:
+            st.error("Google libraries missing. Run: pip install google-auth-oauthlib google-api-python-client")
+        except Exception as e:
+            st.error(f"Gmail Error: {e}")
+            
     st.markdown("---")
     st.subheader("Add Documents")
+    
+    # File Uploader (All Formats)
     uploads = st.file_uploader(
-        "Upload PDFs, TXT, logs, code (multi-select)",
-        type=["pdf", "txt", "md", "log", "c", "h", "py", "json"],
+        "Upload Knowledge (Docs, Code, Images, Excel)",
+        type=[
+            "pdf", "docx", "pptx", "xlsx", "xls",  # Office Docs
+            "txt", "md", "log", "json",            # Text
+            "py", "c", "h", "js", "html",          # Code
+            "jpg", "jpeg", "png"                   # Images (OCR)
+        ],
         accept_multiple_files=True,
     )
-    ingest_btn = st.button("Ingest to Knowledge Base", use_container_width=True)
-    clear_btn = st.button("Clear Knowledge Base (danger)", type="secondary", use_container_width=True)
+    
+    ingest_btn = st.button("Ingest Docs", use_container_width=True)
+    clear_btn = st.button("Clear Database", type="secondary", use_container_width=True)
 
-# Initialize client & embedder
-with st.spinner("Initializing vector database and embedder..."):
+# ---------------------------
+# Logic: DB & Ingestion
+# ---------------------------
+# Initialize Vector DB
+with st.spinner("Loading Vector Database..."):
     try:
-        model, embed_fn = get_embedder(EMBED_MODEL)
+        model, embed_fn = chroma_store.get_embedder(EMBED_MODEL)
+        client = chroma_store.get_chroma_client(PERSIST_DIR)
+        collection = chroma_store.ensure_collection(client, embed_fn)
     except Exception as e:
-        st.error(f"Embedder initialization failed: {e}")
-        st.stop()
-
-    try:
-        client = get_chroma_client(PERSIST_DIR)
-        collection = ensure_collection(client, embed_fn)
-    except Exception as e:
-        st.error(f"Chroma initialization failed: {e}")
+        st.error(f"Database Error: {e}")
         st.stop()
 
 if clear_btn:
-    with st.spinner("Clearing vector store..."):
-        try:
-            client.delete_collection(COLLECTION_NAME)
-        except Exception:
-            pass
-        collection = ensure_collection(client, embed_fn)
+    try:
+        client.delete_collection(COLLECTION_NAME)
+        collection = chroma_store.ensure_collection(client, embed_fn)
         st.success("Knowledge base cleared.")
+    except Exception as e:
+        st.error(f"Error clearing DB: {e}")
 
 if ingest_btn and uploads:
-    added_total = 0
-    for up in uploads:
-        text, fname = extract_text_from_upload(up)
+    total_chunks = 0
+    progress_bar = st.progress(0)
+    for idx, up in enumerate(uploads):
+        text, fname = file_readers.extract_text_from_upload(up)
         meta = {"source": fname}
-        added = add_document(collection, text, meta)
-        added_total += added
-    st.success(f"Ingested {len(uploads)} files into {added_total} chunks.")
+        count = chroma_store.add_document(collection, text, meta)
+        total_chunks += count
+        progress_bar.progress((idx + 1) / len(uploads))
+    st.success(f"Ingested {len(uploads)} files ({total_chunks} chunks).")
 
+# ---------------------------
+# Chat Interface
+# ---------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -277,38 +208,56 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-question = st.chat_input("Ask about your uploaded knowledge…")
-if question:
+if question := st.chat_input("Ask SyBot about your documents or emails..."):
+    if not active_key:
+        st.error("Please enter a Groq API Key in the sidebar.")
+        st.stop()
+
+    # User Message
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user"):
         st.markdown(question)
 
+    # Assistant Response
     with st.chat_message("assistant"):
-        with st.spinner("Retrieving context and drafting answer…"):
-            hits = retrieve(collection, question, top_k=top_k)
+        with st.spinner("SyBot is thinking..."):
+            # 1. Retrieve
+            hits = chroma_store.retrieve(collection, question, top_k=top_k)
+            
             if not hits or all(h[0] == [] for h in hits):
-                st.warning("No relevant context found. Please upload documents or broaden your question.")
-                answer = "No relevant context found."
+                st.warning("No relevant context found.")
+                answer = "I couldn't find any relevant information in your documents or emails."
             else:
-                system, user = build_prompt(question, hits)
-                answer = call_grok(system, user)
-                st.markdown(answer)
+                # 2. Build Prompt (using Groq for summarization)
+                sources_block = []
+                total_chars = 0
+                from core.config import MAX_TOTAL_CONTEXT_CHARS
+                
+                for i, (doc, meta, dist, _id) in enumerate(hits, start=1):
+                    title = meta.get("source", "Doc")
+                    # Summarize
+                    chunk_sum = llm_groq.summarize_chunk(doc, api_key=active_key)
+                    
+                    if total_chars + len(chunk_sum) > MAX_TOTAL_CONTEXT_CHARS:
+                        break
+                    
+                    sources_block.append(f"[S{i}] {title}\n{chunk_sum}")
+                    total_chars += len(chunk_sum)
 
-                if hits:
-                    with st.expander("Sources used"):
-                        for i, (doc, meta, dist, _id) in enumerate(hits, start=1):
-                            title = meta.get("source", f"Doc {_id[:8]}") if isinstance(meta, dict) else f"Doc {_id[:8]}"
-                            st.markdown(f"**[S{i}]** {title} — distance: {dist:.4f}")
-                            st.code(doc[:MAX_CHARS_PER_CHUNK] + ("…" if len(doc) > MAX_CHARS_PER_CHUNK else ""))
+                context_text = "\n\n".join(sources_block)
+                
+                system_msg = "You are a helpful expert. Answer strictly based on the context provided."
+                user_msg = f"Context:\n{context_text}\n\nQuestion: {question}"
+                
+                # 3. Generate
+                answer = llm_groq.call_groq(system_msg, user_msg, model=selected_model, api_key=active_key)
+                
+                st.markdown(answer)
+                
+                # Show Sources
+                with st.expander("View Sources"):
+                    for i, (doc, meta, dist, _) in enumerate(hits, start=1):
+                        st.caption(f"Source {i}: {meta.get('source')} (Dist: {dist:.3f})")
+                        st.text(doc[:200] + "...")
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
-
-st.markdown(
-    """
----
-**Tips**
-- Upload a few highly relevant PDFs/logs first. Then ask targeted questions.
-- If answers look generic, increase Top-K or add more detailed documents.
-- Works fully online with Grok API — make sure your GROK_API_KEY is set.
-"""
-)

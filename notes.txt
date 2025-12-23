@@ -3,7 +3,7 @@ https://sykatiya-my.sharepoint.com/:p:/p/midhun_a/ESE0Nwz3UrdGkKpt_qtyu6ABmYowP1
 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
 
 
-OPENAI_API_KEY=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
+OPENAI_API_KEY = "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"
 
 cd C:\Users\midhu\KnowledgeBot\code_base
 
@@ -52,4 +52,17 @@ sudo systemctl stop ollama.service
 
 taskkill /F /IM ollama.exe
 taskkill /F /IM "ollama app.exe"
+
+
+deactivation and reactivation
+
+deactivate
+venv\Scripts\activate
+python -m streamlit run app.py
+
+streamlit run app.py
+
+
+
+
 

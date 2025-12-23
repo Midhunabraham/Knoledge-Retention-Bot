@@ -19,7 +19,7 @@ import openai
 # ---------------------------
 # App Constants & Helpers
 # ---------------------------
-APP_TITLE = "Knowledge Retention & Training Bot (Prototype)"
+APP_TITLE = "Knowledge Retention & Training Bot"
 PERSIST_DIR = ".chroma"
 COLLECTION_NAME = "company_knowledge"
 EMBED_MODEL = "all-MiniLM-L6-v2"

@@ -15,7 +15,16 @@ __pycache__/
 *.zip
 *.tar
 *.bin
+*.pdf
+*.xlxs
+*.pptx
+*.txt
+*.xlsx
 
 # Ignore models
 *.pt
 *.pth
+
+# Ignore credenrtials
+code_base/*.json
+!code_base/*.json.example
