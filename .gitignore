@@ -2,6 +2,9 @@
 venv/
 code_base/venv/
 
+# Streamlit secrets
+code_base/.streamlit/secrets.toml
+
 # Ignore Python cache
 __pycache__/
 *.pyc
