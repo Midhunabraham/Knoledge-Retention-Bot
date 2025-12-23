@@ -4,87 +4,88 @@ from core.config import APP_TITLE, EMBED_MODEL, PERSIST_DIR, COLLECTION_NAME, GR
 from core import file_readers, chroma_store, prompt_builder, llm_groq
 from core.ui import render_header
 
-# Clear chat if logo clicked
-if st.query_params.get("clear_chat"):
-    st.session_state.messages = []
-    st.query_params.clear()
-
+# ---------------------------
+# Page Setup
+# ---------------------------
 st.set_page_config(
     page_title="SyBot",
     layout="wide"
 )
 
+# Clear chat if logo clicked
+if st.query_params.get("clear_chat"):
+    st.session_state.messages = []
+    st.query_params.clear()
+
+# ---------------------------
+# Helper: Load image as base64
+# ---------------------------
+def get_base64_image(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+logo_base64 = get_base64_image("assets/logo.png")
+
 # ---------------------------
 # Streamlit UI Setup
 # ---------------------------
 
-# ---------- LOGO ----------
-def get_base64_image(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-logo_base64 = get_base64_image("assets/logo.png")
-
-st.markdown(
-    f"""
-    <style>
-        .sybot-logo {{
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            width: 56px;
-            z-index: 1000;
-            cursor: pointer;
-        }}
-    </style>
-
-    <a href="?clear_chat=true">
-        <img class="sybot-logo" src="data:image/png;base64,{logo_base64}">
-    </a>
-    """,
-    unsafe_allow_html=True
-)
+# ---------- HEADER ----------
+def render_header():
+    st.markdown("<h1 style='text-align:center'>Welcome to SyBot</h1>", unsafe_allow_html=True)
 
 render_header()
+
 # ---------------------------
 # Sidebar & Settings
 # ---------------------------
-def get_base64_image(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-logo_base64 = get_base64_image("assets/logo.png")
 with st.sidebar:
-
-# ---------- SIDEBAR FIXED LOGO ----------
+    # ---------- SIDEBAR FIXED LOGO + NEW CHAT BUTTON ----------
     st.markdown(
         f"""
-        <style>
-            /* Fix sidebar logo at top */
-            [data-testid="stSidebar"] {{
-                padding-top: 90px;
-            }}
-
-            .sidebar-logo {{
-                position: fixed;
-                top: 12px;
-                left: 16px;
-                width: 80px;
-                z-index: 200;
-                background-color: white;
-                padding: 6px 10px;
-                border-radius: 8px;
-            }}
-        </style>
-
-        <div class="sidebar-logo">
-            <img src="data:image/png;base64,{logo_base64}" width="140">
+        <div style="position:fixed; top:12px; left:12px; display:flex; align-items:center; gap:8px;">
+            <a href="?clear_chat=true">
+                <img src="data:image/png;base64,{logo_base64}" width="60">
+            </a>
+            <a href="?clear_chat=true">
+                <button style="
+                    padding:6px 10px;
+                    border-radius:6px;
+                    border:none;
+                    background-color:#4CAF50;
+                    color:white;
+                    cursor:pointer;
+                    font-weight:bold;
+                ">New Chat</button>
+            </a>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # ---------- COLLAPSIBLE HELP ----------
+    with st.expander("Help ❓"):
+        st.markdown(
+            """
+            **Welcome to SyBot Help!**
+
+            **Capabilities:**
+            - Upload and process documents: PDF, DOCX, PPTX, XLSX, TXT, CSV, Images (OCR supported)
+            - Answer questions based on uploaded documents
+            - Provide summaries and key points
+            - Cross-reference information across multiple documents
+            - Integrate with email and other systems for document-based queries
+
+            **How to use:**
+            1. Upload your document in the main area.
+            2. Ask your question in the input box.
+            3. SyBot will analyze the document and provide an answer.
+            """
+        )
+
+    # ---------- OTHER SIDEBAR ELEMENTS ----------
     st.subheader("API Setup")
-    
+
     # 1. Try to load from secrets.toml first
     secret_key = st.secrets.get("GROQ_API_KEY")
     
