@@ -1,3 +1,10 @@
+# Add to .gitignore
+echo "# Chroma DB cache" >> .gitignore
+echo "code_base/.chroma/" >> .gitignore
+echo "" >> .gitignore
+echo "# Streamlit secrets" >> .gitignore
+echo "code_base/.streamlit/secrets.toml" >> .gitignore
+
 # Ignore Python venv
 venv/
 code_base/venv/
