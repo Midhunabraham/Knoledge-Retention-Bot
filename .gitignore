@@ -2,8 +2,12 @@
 venv/
 code_base/venv/
 
+# Chroma DB / cache
+code_base/.chroma/
+
 # Streamlit secrets
 code_base/.streamlit/secrets.toml
+
 
 # Ignore Python cache
 __pycache__/
