@@ -42,3 +42,4 @@ __pycache__/
 # Ignore credenrtials
 code_base/*.json
 !code_base/*.json.example
+!requirements.txt
