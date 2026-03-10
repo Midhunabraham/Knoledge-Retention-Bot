@@ -1,0 +1,751 @@
+From: "Midhun  Abraham" <midhun.a@sykatiya.com>
+To: Sri Ranjani <Sri@sykatiya.com>, Biju Sreedharan Nair <biju@sykatiya.com>
+CC: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>, Aakurathi Balaram
+	<balaram.aakurathi@sykatiya.com>, Naga Surendra Reddy Adapa
+	<nagasr@sykatiya.com>, Senagasetty Prasuna Devi <prasuna.devi@sykatiya.com>,
+	Kanchikan Hemant Manja <hemant@sykatiya.com>
+Subject: Re: Evaluation Board details.
+Thread-Topic: Evaluation Board details.
+Thread-Index:
+	AQHbucPdXsUAGTwMCkiR4kLcZUBfQLO8UYbAgAKhto6Axgoc2oAEkgZZgAAhKx2AAX//UoCacVG1gCLpFXWAByzqiQ==
+Date: Mon, 12 Jan 2026 07:33:04 +0000
+Message-ID: <558c0fe0-4d4f-4fe5-9fd8-afc2e0866f54@email.android.com>
+References:
+	<PN2P287MB0721DE91DE1568D1C87915C2EC832@PN2P287MB0721.INDP287.PROD.OUTLOOK.COM>
+ <MAYP287MB391360F44B9F8218A00BFF0EA4832@MAYP287MB3913.INDP287.PROD.OUTLOOK.COM>
+ <PN2P287MB0721DAFF88256FDE83ED35A1EC8D2@PN2P287MB0721.INDP287.PROD.OUTLOOK.COM>
+ <MA0P287MB0698DB3C77DA821826AE4C05DD03A@MA0P287MB0698.INDP287.PROD.OUTLOOK.COM>
+ <MAYP287MB3913B5AEAFAAFDD2BF4DBBAEA40CA@MAYP287MB3913.INDP287.PROD.OUTLOOK.COM>
+ <MA0P287MB06981F24B07A237621F5EF76DD0CA@MA0P287MB0698.INDP287.PROD.OUTLOOK.COM>
+ <MAYP287MB39134DC7246C81FC2110613CA40FA@MAYP287MB3913.INDP287.PROD.OUTLOOK.COM>
+ <PN2P287MB29575143A28A0A76B1B718CDECAAA@PN2P287MB2957.INDP287.PROD.OUTLOOK.COM>
+ <PN2P287MB2957EC63F075B87342425BEDEC84A@PN2P287MB2957.INDP287.PROD.OUTLOOK.COM>
+In-Reply-To:
+	<PN2P287MB2957EC63F075B87342425BEDEC84A@PN2P287MB2957.INDP287.PROD.OUTLOOK.COM>
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-Exchange-Organization-SCL: -1
+X-MS-TNEF-Correlator:
+X-MS-Exchange-Organization-RecordReviewCfmType: 0
+Content-Type: multipart/alternative;
+	boundary="_000_558c0fe04d4f4fe59fd8afc2e0866f54emailandroidcom_"
+MIME-Version: 1.0
+
+--_000_558c0fe04d4f4fe59fd8afc2e0866f54emailandroidcom_
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Team,
+
+Looping Hemath (HR) into this email thread for visibility and further discu=
+ssion.
+
+Thanks.
+
+Best regards,
+Midhun Abraham.
+
+On Jan 7, 2026 11:32 PM, Midhun Abraham <midhun.a@sykatiya.com> wrote:
+Dear Team,
+
+I have collected the ATSAME70 evaluation board from the Sykatiya office and=
+ will be keeping the device at the Vinyana office and will be working from =
+that location.
+
+Thank you, Sri and Prasuna, for your support.
+
+Regards,
+Midhun Abraham.
+________________________________
+From: Midhun Abraham <midhun.a@sykatiya.com>
+Sent: Tuesday, December 16, 2025 6:45 PM
+To: Sri Ranjani <Sri@sykatiya.com>; Biju Sreedharan Nair <biju@sykatiya.com=
+>
+Cc: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>; Aakurathi Balaram <balar=
+am.aakurathi@sykatiya.com>; Naga Surendra Reddy Adapa <nagasr@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hi Sri and Biju,
+I would like to share an update on the initial bring-up of the ATSAME70Q21 =
+evaluation kit.
+The development environment was successfully set up using MPLAB X IDE and t=
+he XC32 compiler, along with the required SAME70 Device Family Pack. Develo=
+pment was carried out using the MPLAB Harmony 3 CSP framework.
+As part of the validation, a basic GPIO LED control application was impleme=
+nted and tested. The application performs LED ON/OFF and LED blinking opera=
+tions, confirming successful programming of the device and correct operatio=
+n of the MCU, clock, GPIO, and debug interface.
+The evaluation kit is confirmed to be functional and ready for further deve=
+lopment. I have handed over the device along with the USB Type-A cable to A=
+bhinaya. Biju and the team will have a discussion next week regarding the s=
+teps to be followed. Once the meeting is completed, Will update you on the =
+next course of action.
+Regards,
+Midhun Abraham.
+
+________________________________
+From: Biju Sreedharan Nair <biju@sykatiya.com>
+Sent: Tuesday, September 9, 2025 11:52 AM
+To: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>; Midhun Abraham <midhun.a=
+@sykatiya.com>; Aakurathi Balaram <balaram.aakurathi@sykatiya.com>; Naga Su=
+rendra Reddy Adapa <nagasr@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hi Rao,
+
+I will talk with Surendra and plan accordingly.
+
+Regards, Biju
+________________________________
+From: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>
+Sent: 08 September 2025 12:59
+To: Biju Sreedharan Nair <biju@sykatiya.com>; Midhun Abraham <midhun.a@syka=
+tiya.com>; Aakurathi Balaram <balaram.aakurathi@sykatiya.com>; Naga Surendr=
+a Reddy Adapa <nagasr@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hello Biju,
+
+I have also discussed this with Surendra.
+
+Please also have a short call with him to see if we need two separate board=
+s for RTL development and firmware dev.
+
+We will take this forward once you all sync-up.
+
+Regards
+BS Rao
+Co-Founder & President
++91-99001-78139
+________________________________
+From: Biju Sreedharan Nair <biju@sykatiya.com>
+Sent: 08 September 2025 11:01
+To: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>; Midhun Abraham <midhun.a=
+@sykatiya.com>; Aakurathi Balaram <balaram.aakurathi@sykatiya.com>; Naga Su=
+rendra Reddy Adapa <nagasr@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hi Rao,
+
+Can we get an evaluation board for us to try out things ? We may also need =
+a CAN Analyzer to send/receive CAN frames from/to this board. Otherwise, we=
+ may have to get a general purpose linux based SBC with a CAN interface to =
+integrate with this.
+
+Can you please tell me to whom should I contact to place an order for an ev=
+aluation board ?
+
+Regards ,Biju
+________________________________
+From: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>
+Sent: 05 September 2025 13:11
+To: Midhun Abraham <midhun.a@sykatiya.com>; Biju Sreedharan Nair <biju@syka=
+tiya.com>; Aakurathi Balaram <balaram.aakurathi@sykatiya.com>; Naga Surendr=
+a Reddy Adapa <nagasr@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
++Surendra / Balaram
+
+Team,
+
+Can we arrive at something and close on this please?
+
+Regards
+BS Rao
+Co-Founder & President
++91-99001-78139
+________________________________
+From: Midhun Abraham <midhun.a@sykatiya.com>
+Sent: 02 May 2025 12:58
+To: Biju Sreedharan Nair <biju@sykatiya.com>
+Cc: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hi Sir,
+
+I have looked into it, and the Microchip ATSAM family does support GCC-base=
+d toolchains. Specifically, it is compatible with ARM GCC and can be used w=
+ith Microchip=92s MPLAB X IDE along with Atmel Studio.
+
+Regards,
+Midhun Abraham
+________________________________
+From: Biju Sreedharan Nair <biju@sykatiya.com>
+Sent: Wednesday, April 30, 2025 8:47 PM
+To: Midhun Abraham <midhun.a@sykatiya.com>
+Cc: Srinivas Rao Bethanamudi <bsrao@sykatiya.com>
+Subject: Re: Evaluation Board details.
+
+Hi Mithun,
+
+I see that the Microchip ATSAM has 2 MB of SDRAM and the description says t=
+hat it is good for full UDS stack development. Eventhough S32K is equally g=
+ood, the size of SRAM in S32K is relatively less.
+Can you please check the supported compiler tool chains that is being suppo=
+rted by Microchip ? We may not be able to use Keil or IAR. Please see wheth=
+er it has support for GCC.
+
+Regards, Biju
+________________________________
+From: Midhun Abraham <midhun.a@sykatiya.com>
+Sent: 30 April 2025 17:06
+To: Biju Sreedharan Nair <biju@sykatiya.com>
+Subject: Evaluation Board details.
+
+Dear Biju,
+I have reviewed some available evaluation boards and compiled a list for yo=
+ur reference, which is attached to this email.
+Among the options, the NXP S32K144 EVB-Q100 appears to be the most suitable=
+ and preferred choice based on documentations and resources.
+Could you kindly review the details and help me in finalizing the selection=
+ of the evaluation board?
+Best regards,
+Midhun Abraham.
+
+
+
+--_000_558c0fe04d4f4fe59fd8afc2e0866f54emailandroidcom_
+Content-Type: text/html; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DWindows-1=
+252">
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+</head>
+<body dir=3D"ltr">
+<div dir=3D"auto">Hi Team,
+<div dir=3D"auto"><br>
+</div>
+<div dir=3D"auto">Looping Hemath (HR) into this email thread for visibility=
+ and further discussion.</div>
+<div dir=3D"auto"><br>
+</div>
+<div dir=3D"auto">Thanks.</div>
+<div dir=3D"auto"><br>
+</div>
+<div dir=3D"auto">Best regards,</div>
+<div dir=3D"auto">Midhun Abraham.</div>
+</div>
+<div class=3D"gmail_extra"><br>
+<div class=3D"gmail_quote">On Jan 7, 2026 11:32 PM, Midhun Abraham &lt;midh=
+un.a@sykatiya.com&gt; wrote:<br type=3D"attribution">
+</div>
+</div>
+<div>
+<div style=3D"font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Cali=
+bri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Dear Team,</div>
+<div class=3D"elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFont=
+,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rg=
+b(0,0,0)">
+<br>
+</div>
+<div class=3D"elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFont=
+,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rg=
+b(0,0,0)">
+I have collected the ATSAME70 evaluation board from the Sykatiya office and=
+ will be keeping the device at the Vinyana office and will be working from =
+that location.</div>
+<div class=3D"elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFont=
+,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rg=
+b(0,0,0)">
+<br>
+</div>
+<div style=3D"font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Cali=
+bri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Thank you, Sri and Prasuna, for your support.</div>
+<div style=3D"font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Cali=
+bri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFont=
+,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rg=
+b(0,0,0)">
+Regards,</div>
+<div class=3D"elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFont=
+,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rg=
+b(0,0,0)">
+Midhun Abraham.</div>
+<div id=3D"appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-serif" co=
+lor=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Midhun Abraham &lt;mi=
+dhun.a@sykatiya.com&gt;<br>
+<b>Sent:</b> Tuesday, December 16, 2025 6:45 PM<br>
+<b>To:</b> Sri Ranjani &lt;Sri@sykatiya.com&gt;; Biju Sreedharan Nair &lt;b=
+iju@sykatiya.com&gt;<br>
+<b>Cc:</b> Srinivas Rao Bethanamudi &lt;bsrao@sykatiya.com&gt;; Aakurathi B=
+alaram &lt;balaram.aakurathi@sykatiya.com&gt;; Naga Surendra Reddy Adapa &l=
+t;nagasr@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Hi Sri and Biju,</div>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+I would like to share an update on the initial bring-up of the ATSAME70Q21 =
+evaluation kit.</div>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+The development environment was successfully set up using MPLAB X IDE and t=
+he XC32 compiler, along with the required SAME70 Device Family Pack. Develo=
+pment was carried out using the MPLAB Harmony 3 CSP framework.</div>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+As part of the validation, a basic GPIO LED control application&nbsp;was im=
+plemented and tested. The application performs LED ON/OFF and LED blinking =
+operations, confirming successful programming of the device and correct ope=
+ration of the MCU, clock, GPIO, and debug
+ interface.</div>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+The evaluation kit is confirmed to be <b>functional&nbsp;</b>and ready for =
+further development. I have handed over the device along with the USB Type-=
+A cable to Abhinaya. Biju and the team will have a discussion next week reg=
+arding the steps to be followed. Once
+ the meeting is completed, Will update you on the next course of action.</d=
+iv>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Regards,</div>
+<div class=3D"x_elementToProof" style=3D"margin-top:1em; margin-bottom:1em;=
+ font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica=
+,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Midhun Abraham.</div>
+<div class=3D"x_elementToProof" style=3D"font-family:Aptos,Aptos_EmbeddedFo=
+nt,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:=
+rgb(0,0,0)">
+<br>
+</div>
+<div id=3D"x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-serif" =
+color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Biju Sreedharan Nai=
+r &lt;biju@sykatiya.com&gt;<br>
+<b>Sent:</b> Tuesday, September 9, 2025 11:52 AM<br>
+<b>To:</b> Srinivas Rao Bethanamudi &lt;bsrao@sykatiya.com&gt;; Midhun Abra=
+ham &lt;midhun.a@sykatiya.com&gt;; Aakurathi Balaram &lt;balaram.aakurathi@=
+sykatiya.com&gt;; Naga Surendra Reddy Adapa &lt;nagasr@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedded=
+Font,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; colo=
+r:rgb(0,0,0)">
+Hi Rao,</div>
+<div class=3D"x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedded=
+Font,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; colo=
+r:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedded=
+Font,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; colo=
+r:rgb(0,0,0)">
+I will talk with Surendra and plan accordingly.</div>
+<div class=3D"x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedded=
+Font,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; colo=
+r:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedded=
+Font,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; colo=
+r:rgb(0,0,0)">
+Regards, Biju</div>
+<div id=3D"x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-serif=
+" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Srinivas Rao Beth=
+anamudi &lt;bsrao@sykatiya.com&gt;<br>
+<b>Sent:</b> 08 September 2025 12:59<br>
+<b>To:</b> Biju Sreedharan Nair &lt;biju@sykatiya.com&gt;; Midhun Abraham &=
+lt;midhun.a@sykatiya.com&gt;; Aakurathi Balaram &lt;balaram.aakurathi@sykat=
+iya.com&gt;; Naga Surendra Reddy Adapa &lt;nagasr@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+Hello Biju,&nbsp;</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+I have also discussed this with Surendra.&nbsp;</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+Please also have a short call with him to see if we need two separate board=
+s for RTL development and firmware dev.</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+We will take this forward once you all sync-up.&nbsp;</div>
+<div class=3D"x_x_x_elementToProof" id=3D"x_x_x_Signature">
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; co=
+lor:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:11pt; co=
+lor:rgb(0,0,0)">
+Regards</div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt; co=
+lor:rgb(0,0,0)">
+<b>BS Rao</b></div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt; co=
+lor:rgb(0,0,0)">
+<b>Co-Founder &amp; President</b></div>
+<div class=3D"x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embedd=
+edFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt; co=
+lor:rgb(0,0,0)">
+<b>+91-99001-78139</b></div>
+</div>
+<div id=3D"x_x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-ser=
+if" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Biju Sreedharan=
+ Nair &lt;biju@sykatiya.com&gt;<br>
+<b>Sent:</b> 08 September 2025 11:01<br>
+<b>To:</b> Srinivas Rao Bethanamudi &lt;bsrao@sykatiya.com&gt;; Midhun Abra=
+ham &lt;midhun.a@sykatiya.com&gt;; Aakurathi Balaram &lt;balaram.aakurathi@=
+sykatiya.com&gt;; Naga Surendra Reddy Adapa &lt;nagasr@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+Hi Rao,</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+Can we get an evaluation board for us to try out things ? We may also need =
+a CAN Analyzer to send/receive CAN frames from/to this board. Otherwise, we=
+ may have to get a general purpose linux based SBC with a CAN interface to =
+integrate with this.</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+Can you please tell me to whom should I contact to place an order for an ev=
+aluation board ?</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Embe=
+ddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt; =
+color:rgb(0,0,0)">
+Regards ,Biju</div>
+<div id=3D"x_x_x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-s=
+erif" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Srinivas Rao =
+Bethanamudi &lt;bsrao@sykatiya.com&gt;<br>
+<b>Sent:</b> 05 September 2025 13:11<br>
+<b>To:</b> Midhun Abraham &lt;midhun.a@sykatiya.com&gt;; Biju Sreedharan Na=
+ir &lt;biju@sykatiya.com&gt;; Aakurathi Balaram &lt;balaram.aakurathi@sykat=
+iya.com&gt;; Naga Surendra Reddy Adapa &lt;nagasr@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
++Surendra / Balaram</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
+Team,&nbsp;</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
+Can we arrive at something and close on this please?</div>
+<div class=3D"x_x_x_x_x_elementToProof" id=3D"x_x_x_x_x_Signature">
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12pt=
+; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:11pt=
+; color:rgb(0,0,0)">
+Regards</div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt=
+; color:rgb(0,0,0)">
+<b>BS Rao</b></div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt=
+; color:rgb(0,0,0)">
+<b>Co-Founder &amp; President</b></div>
+<div class=3D"x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_Em=
+beddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:10pt=
+; color:rgb(0,0,0)">
+<b>+91-99001-78139</b></div>
+</div>
+<div id=3D"x_x_x_x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_x_x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans=
+-serif" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Midhun Abra=
+ham &lt;midhun.a@sykatiya.com&gt;<br>
+<b>Sent:</b> 02 May 2025 12:58<br>
+<b>To:</b> Biju Sreedharan Nair &lt;biju@sykatiya.com&gt;<br>
+<b>Cc:</b> Srinivas Rao Bethanamudi &lt;bsrao@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+Hi Sir,</div>
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+I have looked into it, and the Microchip ATSAM family does support GCC-base=
+d toolchains. Specifically, it is compatible with ARM GCC&nbsp;and can be u=
+sed with Microchip=92s MPLAB X IDE&nbsp;along with Atmel Studio.&nbsp;</div=
+>
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+Regards,</div>
+<div class=3D"x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Aptos_=
+EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:12=
+pt; color:rgb(0,0,0)">
+Midhun Abraham&nbsp;</div>
+<div id=3D"x_x_x_x_x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_x_x_x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sa=
+ns-serif" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Biju Sree=
+dharan Nair &lt;biju@sykatiya.com&gt;<br>
+<b>Sent:</b> Wednesday, April 30, 2025 8:47 PM<br>
+<b>To:</b> Midhun Abraham &lt;midhun.a@sykatiya.com&gt;<br>
+<b>Cc:</b> Srinivas Rao Bethanamudi &lt;bsrao@sykatiya.com&gt;<br>
+<b>Subject:</b> Re: Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+Hi Mithun,</div>
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+I see that the Microchip ATSAM has 2 MB of SDRAM and the description says t=
+hat it is good for full UDS stack development. Eventhough S32K is equally g=
+ood, the size of SRAM in S32K is relatively less.</div>
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+Can you please check the supported compiler tool chains that is being suppo=
+rted by Microchip ? We may not be able to use Keil or IAR. Please see wheth=
+er it has support for GCC.</div>
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Apto=
+s_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-size:=
+12pt; color:rgb(0,0,0)">
+Regards, Biju</div>
+<div id=3D"x_x_x_x_x_x_x_appendonsend"></div>
+<hr tabindex=3D"-1" style=3D"display:inline-block; width:98%">
+<div id=3D"x_x_x_x_x_x_x_divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, =
+sans-serif" color=3D"#000000" style=3D"font-size:11pt"><b>From:</b> Midhun =
+Abraham &lt;midhun.a@sykatiya.com&gt;<br>
+<b>Sent:</b> 30 April 2025 17:06<br>
+<b>To:</b> Biju Sreedharan Nair &lt;biju@sykatiya.com&gt;<br>
+<b>Subject:</b> Evaluation Board details.</font>
+<div>&nbsp;</div>
+</div>
+<style type=3D"text/css" style=3D"display:none">
+<!--
+p
+	{margin-top:0;
+	margin-bottom:0}
+-->
+</style>
+<div dir=3D"ltr">
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MSFont=
+Service,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)">
+Dear Biju,</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:1em 0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MS=
+FontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)"=
+>
+I have reviewed some available evaluation boards and compiled a list for yo=
+ur reference, which is attached to this email.</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:1em 0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MS=
+FontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)"=
+>
+Among the options, the <b>NXP S32K144 EVB-Q100</b>&nbsp;appears to be the m=
+ost suitable and preferred choice based on documentations and resources.</d=
+iv>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:1em 0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MS=
+FontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)"=
+>
+Could you kindly review the details and help me in finalizing the selection=
+ of the evaluation board?</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:1em 0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MS=
+FontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)"=
+>
+Best regards,</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"text-align:left; tex=
+t-indent:0px; margin:1em 0px; font-family:Aptos,Aptos_EmbeddedFont,Aptos_MS=
+FontService,Calibri,Helvetica,sans-serif; font-size:12pt; color:rgb(0,0,0)"=
+>
+Midhun Abraham.</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Ap=
+tos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-siz=
+e:12pt; color:rgb(0,0,0)">
+<br>
+</div>
+<div class=3D"x_x_x_x_x_x_x_x_elementToProof" style=3D"font-family:Aptos,Ap=
+tos_EmbeddedFont,Aptos_MSFontService,Calibri,Helvetica,sans-serif; font-siz=
+e:12pt; color:rgb(0,0,0)">
+<br>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
+
+--_000_558c0fe04d4f4fe59fd8afc2e0866f54emailandroidcom_--
