@@ -60,9 +60,11 @@ deactivate
 venv\Scripts\activate
 python -m streamlit run app.py
 
-streamlit run app.py
+streamlit run app_groq.py
 
+Client ID Gmail
 
+528037126842-gj15lhhaon4q1m1qtejed3n1d424fgov.apps.googleusercontent.com
 
 
 
