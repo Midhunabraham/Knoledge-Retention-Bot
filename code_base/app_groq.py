@@ -494,17 +494,25 @@ if clear_btn:
         st.error(f"Error clearing DB: {e}")
 
 # Handle ingestion based on mode
+# Add near top of app, after session state init
+if "excel_file_store" not in st.session_state:
+    st.session_state.excel_file_store = {}  # {filename: raw_bytes}
+
+# In your ingestion block, update to:
 if ingest_btn and uploads:
     total_chunks = 0
     progress_bar = st.progress(0)
-    
-    # Show mode indicator
     mode_text = "temporary session" if st.session_state.ingestion_mode == "temporary" else "permanent database"
     st.info(f"Ingesting {len(uploads)} file(s) to {mode_text}...")
     
     for idx, up in enumerate(uploads):
-        text, fname = file_readers.extract_text_from_upload(up)
+        text, fname, raw_bytes = file_readers.extract_text_from_upload(up)  # updated signature
         meta = {"source": fname, "ingestion_mode": st.session_state.ingestion_mode}
+        
+        # Store raw Excel bytes in session for query-time filtering
+        if any(fname.lower().endswith(ext) for ext in ['.xlsx', '.xls']):
+            st.session_state.excel_file_store[fname] = raw_bytes
+            st.caption(f"📊 Stored raw Excel bytes for `{fname}` for smart filtering")
         
         if st.session_state.ingestion_mode == "temporary":
             meta["session_id"] = st.session_state.session_id
@@ -514,13 +522,34 @@ if ingest_btn and uploads:
         total_chunks += count
         progress_bar.progress((idx + 1) / len(uploads))
     
-    # Update session info for temporary mode
-    if st.session_state.ingestion_mode == "temporary":
-        session_info = get_temp_session_info(st.session_state.session_id)
-        files_ingested = session_info.get("files_ingested", 0) + len(uploads)
-        save_temp_session(st.session_state.session_id, files_ingested)
-    
     st.success(f"Ingested {len(uploads)} files ({total_chunks} chunks) to {mode_text}.")
+# if ingest_btn and uploads:
+#     total_chunks = 0
+#     progress_bar = st.progress(0)
+    
+#     # Show mode indicator
+#     mode_text = "temporary session" if st.session_state.ingestion_mode == "temporary" else "permanent database"
+#     st.info(f"Ingesting {len(uploads)} file(s) to {mode_text}...")
+    
+#     for idx, up in enumerate(uploads):
+#         text, fname = file_readers.extract_text_from_upload(up)
+#         meta = {"source": fname, "ingestion_mode": st.session_state.ingestion_mode}
+        
+#         if st.session_state.ingestion_mode == "temporary":
+#             meta["session_id"] = st.session_state.session_id
+#             meta["ingestion_time"] = datetime.now().isoformat()
+        
+#         count = chroma_store.add_document(collection, text, meta)
+#         total_chunks += count
+#         progress_bar.progress((idx + 1) / len(uploads))
+    
+#     # Update session info for temporary mode
+#     if st.session_state.ingestion_mode == "temporary":
+#         session_info = get_temp_session_info(st.session_state.session_id)
+#         files_ingested = session_info.get("files_ingested", 0) + len(uploads)
+#         save_temp_session(st.session_state.session_id, files_ingested)
+    
+#     st.success(f"Ingested {len(uploads)} files ({total_chunks} chunks) to {mode_text}.")
 
 # ---------------------------
 # Chat Interface
@@ -532,11 +561,54 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-if question := st.chat_input("Ask SyBot about your documents or emails..."):
-    if not active_key:
-        st.error("Please enter a Groq API Key in the sidebar.")
-        st.stop()
+# Helper: detect Excel sources
+EXCEL_EXTENSIONS = ['.xlsx', '.xls']
 
+def is_excel_source(meta):
+    source = meta.get("source", "")
+    return any(source.lower().endswith(ext) for ext in EXCEL_EXTENSIONS)
+
+def get_all_excel_chunks(collection, excel_source):
+    """Retrieve ALL chunks from a specific Excel file in the collection."""
+    try:
+        all_results = collection.get(
+            where={"source": excel_source},
+            include=["documents", "metadatas"]
+        )
+        return [
+            (doc, meta, 0.0, "")
+            for doc, meta in zip(
+                all_results["documents"],
+                all_results["metadatas"]
+            )
+        ]
+    except Exception as e:
+        st.warning(f"Could not retrieve all Excel chunks: {e}")
+        return []
+
+# At the very top of your `if question := st.chat_input(...)` block, BEFORE any retrieval:
+
+question = st.chat_input("Ask SyBot about your documents or emails...")
+
+if question:
+    if question.strip().lower().startswith("debug excel"):
+        # Show actual column names and sample CPU values from stored Excel
+        for fname, raw_bytes in st.session_state.get("excel_file_store", {}).items():
+            import pandas as pd, io
+            df = pd.read_excel(io.BytesIO(raw_bytes), sheet_name=None, keep_default_na=False)
+
+            for sheet, data in df.items():
+                st.write(f"**File:** {fname} | **Sheet:** {sheet}")
+                st.write(f"**Columns:** {data.columns.tolist()}")
+
+                for col in data.columns:
+                    if any(kw in col.lower() for kw in ["cpu", "core", "processor"]):
+                        st.write(f"**Unique values in `{col}`:** {data[col].unique().tolist()[:20]}")
+
+                    if any(kw in col.lower() for kw in ["flash", "ram", "memory"]):
+                        st.write(f"**Sample values in `{col}`:** {data[col].head(5).tolist()}")
+
+        st.stop()
     # User Message
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user"):
@@ -545,49 +617,130 @@ if question := st.chat_input("Ask SyBot about your documents or emails..."):
     # Assistant Response
     with st.chat_message("assistant"):
         with st.spinner("SyBot is thinking..."):
-            # 1. Retrieve
+
+            # -------------------------------------------------------
+            # 1. Retrieve initial top-k hits via similarity search
+            # -------------------------------------------------------
             hits = chroma_store.retrieve(collection, question, top_k=top_k)
-            
+
             if not hits or all(h[0] == [] for h in hits):
                 st.warning("No relevant context found.")
                 answer = "I couldn't find any relevant information in your documents or emails."
             else:
-                # 2. Build Prompt (using Groq for summarization)
+                # -------------------------------------------------------
+                # 2. Check if any hits come from an Excel file
+                # -------------------------------------------------------
+                excel_hits = [
+                    (doc, meta, dist, _id)
+                    for doc, meta, dist, _id in hits
+                    if is_excel_source(meta)
+                ]
+
+                if excel_hits:
+                    excel_source = excel_hits[0][1].get("source")
+
+                    if excel_source in st.session_state.get("excel_file_store", {}):
+                        raw_bytes = st.session_state.excel_file_store[excel_source]
+
+                        # ✅ Use pandas to filter BEFORE sending to LLM
+                        with st.spinner(f"📊 Filtering Excel data for your query..."):
+                            filtered_text = file_readers.filter_excel_by_criteria(
+                                raw_bytes, question, api_key=active_key
+                            )
+
+                        hits = [(filtered_text, excel_hits[0][1], 0.0, "")]
+
+                        # Show a preview of what was filtered
+                        line_count = filtered_text.count("\n")
+                        st.info(f"📊 Excel filtered: {line_count} lines of relevant data extracted from `{excel_source}`")
+
+                    else:
+                        st.warning(
+                            f"⚠️ Raw Excel bytes not found for `{excel_source}`. "
+                            "Please re-ingest the file to enable smart filtering."
+                        )
+                        all_excel_chunks = get_all_excel_chunks(collection, excel_source)
+                        if all_excel_chunks:
+                            hits = all_excel_chunks
+                # -------------------------------------------------------
+                # 3. Build context — skip summarization for Excel chunks
+                # -------------------------------------------------------
                 sources_block = []
                 total_chars = 0
                 from core.config import MAX_TOTAL_CONTEXT_CHARS
-                
+
                 for i, (doc, meta, dist, _id) in enumerate(hits, start=1):
                     title = meta.get("source", "Doc")
-                    # Add ingestion mode indicator to source
                     ingestion_mode = meta.get("ingestion_mode", "permanent")
                     mode_indicator = "⏰" if ingestion_mode == "temporary" else "📁"
-                    
-                    # Summarize
-                    chunk_sum = llm_groq.summarize_chunk(doc, api_key=active_key)
-                    
-                    if total_chars + len(chunk_sum) > MAX_TOTAL_CONTEXT_CHARS:
+
+                    # Skip summarization for Excel — raw data must be preserved
+                    if is_excel_source(meta):
+                        chunk_content = doc  # Use full raw chunk
+                    else:
+                        chunk_content = llm_groq.summarize_chunk(doc, api_key=active_key)
+
+                    # Always include first chunk — never skip it even if large
+                    if i > 1 and total_chars + len(chunk_content) > MAX_TOTAL_CONTEXT_CHARS:
+                        st.caption(f"⚠️ Context limit reached at chunk {i}/{len(hits)}. Some data may be excluded.")
                         break
-                    
-                    sources_block.append(f"{mode_indicator} [S{i}] {title}\n{chunk_sum}")
-                    total_chars += len(chunk_sum)
+
+                    sources_block.append(f"{mode_indicator} [S{i}] {title}\n{chunk_content}")
+                    total_chars += len(chunk_content)
 
                 context_text = "\n\n".join(sources_block)
-                
-                system_msg = "You are a helpful expert. Answer strictly based on the context provided."
+
+                # -------------------------------------------------------
+                # 4. Build prompt with explicit Excel instruction
+                # -------------------------------------------------------
+                if excel_hits:
+                    system_msg = (
+                        "You are a helpful data analyst. "
+                        "The context contains filtered tabular data from an Excel file. "
+                        "If the result shows 0 matching rows, clearly explain that the data was searched "
+                        "but NO products exist matching ALL the specified criteria. "
+                        "Suggest the closest alternatives based on available data. "
+                        "NEVER say 'no data provided' — the data was provided and searched, just no rows matched."
+                    )
+                else:
+                    system_msg = "You are a helpful expert. Answer strictly based on the context provided."
+
                 user_msg = f"Context:\n{context_text}\n\nQuestion: {question}"
-                
-                # 3. Generate
+
+                # ── Hard cap: Groq free tier = 12,000 TPM ≈ 44,000 chars total request ──
+                # System msg + question + context must all fit.
+                # Cap context at 6,000 tokens worth = ~24,000 chars to leave room for everything.
+                GROQ_MAX_REQUEST_CHARS = 24000
+
+                if len(context_text) > GROQ_MAX_REQUEST_CHARS:
+                    context_text = context_text[:GROQ_MAX_REQUEST_CHARS]
+                    st.caption(f"⚠️ Context capped at {GROQ_MAX_REQUEST_CHARS} chars to fit Groq token limit.")
+
+                user_msg = f"Context:\n{context_text}\n\nQuestion: {question}"
                 answer = llm_groq.call_groq(system_msg, user_msg, model=selected_model, api_key=active_key)
-                
+                # # -------------------------------------------------------
+                # # 5. Generate Answer
+                # # -------------------------------------------------------
+                # answer = llm_groq.call_groq(
+                #     system_msg, user_msg,
+                #     model=selected_model,
+                #     api_key=active_key
+                # )
+
                 st.markdown(answer)
-                
-                # Show Sources with mode indicators
+
+                # -------------------------------------------------------
+                # 6. Show Sources
+                # -------------------------------------------------------
                 with st.expander("View Sources"):
                     for i, (doc, meta, dist, _) in enumerate(hits, start=1):
                         ingestion_mode = meta.get("ingestion_mode", "permanent")
                         mode_text = "(Temporary)" if ingestion_mode == "temporary" else "(Permanent)"
-                        st.caption(f"Source {i} {mode_text}: {meta.get('source')} (Dist: {dist:.3f})")
+                        excel_tag = "📊 Excel" if is_excel_source(meta) else ""
+                        st.caption(
+                            f"Source {i} {mode_text} {excel_tag}: "
+                            f"{meta.get('source')} (Dist: {dist:.3f})"
+                        )
                         st.text(doc[:200] + "...")
 
     st.session_state.messages.append({"role": "assistant", "content": answer})

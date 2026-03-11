@@ -12,8 +12,8 @@ OLLAMA_URL = "http://localhost:11434/api"
 
 # Retrieval & Generation Settings
 DEFAULT_TOP_K = 4
-MAX_CHARS_PER_CHUNK = 1000        # chunk truncation before summarization
-MAX_TOTAL_CONTEXT_CHARS = 5000    # max context sent to Ollama (Increased from 500 to 5000 for better answers)
+MAX_CHARS_PER_CHUNK = 500000          # chunk truncation before summarization
+MAX_TOTAL_CONTEXT_CHARS = 800000      # max context sent to Ollama (Increased from 500 to 5000 for better answers)
 SUMMARIZE_THRESHOLD = 600         # summarize chunks longer than this
 OLLAMA_TIMEOUT = 120
 # ... existing constants ...

@@ -24,8 +24,8 @@ PERSIST_DIR = ".chroma"
 COLLECTION_NAME = "company_knowledge"
 EMBED_MODEL = "all-MiniLM-L6-v2"
 DEFAULT_TOP_K = 4
-MAX_CHARS_PER_CHUNK = 1000        # chunk truncation before summarization
-MAX_TOTAL_CONTEXT_CHARS = 500    # max context sent to LLM
+MAX_CHARS_PER_CHUNK = 500000          # chunk truncation before summarization
+MAX_TOTAL_CONTEXT_CHARS = 800000      # max context sent to LLM
 SUMMARIZE_THRESHOLD = 600         # summarize chunks longer than this
 
 # OpenAI model to use
