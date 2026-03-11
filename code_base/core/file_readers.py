@@ -194,7 +194,7 @@ def extract_text_from_upload(upload) -> Tuple[str, str, bytes]:
 # Groq TPM limit: 12,000 tokens/min on free tier
 # 1 token â‰ˆ 4 chars. Reserve ~4000 tokens for system+question+answer.
 # Remaining ~8000 tokens = ~32,000 chars for data context.
-GROQ_SAFE_CONTEXT_CHARS = 30000
+GROQ_SAFE_CONTEXT_CHARS = 15000
 
 
 def _build_schema_summary(df: pd.DataFrame) -> str:
