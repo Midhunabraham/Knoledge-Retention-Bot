@@ -19,3 +19,5 @@ langchain-core==0.3.76
 python-docx
 openpyxl
 python-pptx
+cryptography
+duckdb
