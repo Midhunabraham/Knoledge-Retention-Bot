@@ -67,12 +67,21 @@ def check_password():
         </div>
         """, unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center; margin-bottom: 30px;'>Secure Login</h2>", unsafe_allow_html=True)
-        st.text_input("Enter Access Password", type="password", key="password",
-                      help="Contact administrator if you don't have the password")
-        login_col1, login_col2, login_col3 = st.columns([1, 2, 1])
-        with login_col2:
-            if st.button("🚀 Login to SyBot", use_container_width=True, type="primary"):
+
+        # ── Use st.form so pressing Enter submits the login ──
+        with st.form("login_form", clear_on_submit=True):
+            st.text_input("Enter Access Password", type="password", key="password",
+                          help="Contact administrator if you don't have the password")
+            login_col1, login_col2, login_col3 = st.columns([1, 2, 1])
+            with login_col2:
+                submitted = st.form_submit_button(
+                    "🚀 Login",
+                    use_container_width=True,
+                    type="primary"
+                )
+            if submitted:
                 password_entered()
+
         if st.session_state.login_attempts > 0:
             st.warning(f"❌ Incorrect password. Attempt {st.session_state.login_attempts}")
         st.markdown("""
@@ -483,19 +492,59 @@ if question:
     with st.chat_message("assistant"):
         with st.spinner("SyBot is thinking..."):
 
-            # ── 1. Similarity search ──
-            hits = chroma_store.retrieve(collection, question, top_k=top_k)
+            # ── 0. Early pagination check — skip ChromaDB for next/prev/page ──
+            # If the user says "next", "prev", "page N" and we have a cached Excel
+            # result, handle it immediately without a new similarity search.
+            early_page_intent, early_page_arg = detect_pagination(question)
+            early_excel_source = next(iter(st.session_state.excel_filtered_df), None)
 
-            if not hits or all(h[0] == [] for h in hits):
-                st.warning("No relevant context found.")
-                answer = "I couldn't find any relevant information in your documents or emails."
+            if early_page_intent and early_excel_source and                st.session_state.excel_filtered_df.get(early_excel_source) is not None:
+                # Synthetic hits so the rest of the flow works unchanged
+                hits        = [("", {"source": early_excel_source, "ingestion_mode": "permanent"}, 0.0, "")]
+                excel_hits  = [(h[0], h[1], h[2], h[3]) for h in hits]
+                raw_bytes   = st.session_state.get("excel_file_store", {}).get(early_excel_source, b"")
+                excel_source = early_excel_source
             else:
-                excel_hits = [(doc, meta, dist, _id) for doc, meta, dist, _id in hits if is_excel_source(meta)]
+                # ── 1. Similarity search ──
+                hits = chroma_store.retrieve(collection, question, top_k=top_k)
+                excel_hits  = []
+                excel_source = None
+                raw_bytes   = b""
+
+            # ── If ChromaDB returned nothing, try direct Excel store ──
+            answer = None
+            if not hits or all(h[0] == [] for h in hits):
+                stored_excel = st.session_state.get("excel_file_store", {})
+                if stored_excel:
+                    first_excel  = next(iter(stored_excel))
+                    hits         = [("", {"source": first_excel, "ingestion_mode": "permanent"}, 0.0, "")]
+                    excel_hits   = [(h[0], h[1], h[2], h[3]) for h in hits]
+                    excel_source = first_excel
+                    raw_bytes    = stored_excel[first_excel]
+                    st.caption(f"🔍 Routing query directly to `{first_excel}`")
+                else:
+                    st.caption("ℹ️ No documents found in the database. Answering from general knowledge.")
+                    answer = llm_groq.call_groq(
+                        "You are a helpful assistant. Answer the user's question using your general knowledge. "
+                        "If the question is about a specific private document or internal data, politely mention "
+                        "that no documents have been uploaded yet and ask the user to upload relevant files.",
+                        question,
+                        model=selected_model,
+                        api_key=active_key
+                    )
+                    st.markdown(answer)
+
+            # ── Process hits (Excel or non-Excel) ──
+            if answer is None and hits and not all(h[0] == [] for h in hits):
+                if not excel_hits:
+                    excel_hits = [(doc, meta, dist, _id) for doc, meta, dist, _id in hits if is_excel_source(meta)]
                 context_text = ""
 
                 if excel_hits:
-                    excel_source = excel_hits[0][1].get("source")
-                    raw_bytes = st.session_state.get("excel_file_store", {}).get(excel_source)
+                    if not excel_source:
+                        excel_source = excel_hits[0][1].get("source")
+                    if not raw_bytes:
+                        raw_bytes = st.session_state.get("excel_file_store", {}).get(excel_source, b"")
 
                     if raw_bytes:
                         # ── Step 1: Load & cache DataFrame + register in DuckDB ──
@@ -558,7 +607,9 @@ if question:
                             current_off   = st.session_state.excel_page_offset.get(excel_source, 0)
                             if page_intent == 'next':
                                 step = page_arg if page_arg else EXCEL_PAGE_SIZE
-                                new_off = min(current_off + step, max(0, total_matched - 1))
+                                # Clamp to last valid page start (not last row index)
+                                last_page_start = max(0, ((total_matched - 1) // EXCEL_PAGE_SIZE) * EXCEL_PAGE_SIZE)
+                                new_off = min(current_off + step, last_page_start)
                             elif page_intent == 'prev':
                                 new_off = max(0, current_off - EXCEL_PAGE_SIZE)
                             elif page_intent == 'page':
@@ -571,21 +622,47 @@ if question:
                             # ── Step 3: NL → SQL via Groq ──
                             with st.spinner("🧠 Generating SQL from your question..."):
                                 col_schema = ", ".join(f'"{c}"' for c in columns)
+                                # Build sample values per column so LLM can match exact text
+                                sample_vals = {}
+                                for col in columns:
+                                    uniq = sheet_df[col].replace("", None).dropna().unique()[:5].tolist()
+                                    if uniq:
+                                        sample_vals[col] = uniq
+                                schema_detail = "\n".join(
+                                    f'  "{c}": e.g. {sample_vals.get(c, [])}' for c in columns
+                                )
+
                                 sql_system = f"""You are a DuckDB SQL expert.
 Table name: excel_table
-Columns: {col_schema}
+Columns and sample values:
+{schema_detail}
 
-RULES:
-- Return ONLY the SQL query, nothing else. No explanation, no markdown, no backticks.
-- Use LIKE '%value%' for text/category matches (case-insensitive with LOWER())
-- Use numeric comparisons (>, <, >=, <=, =) directly for numeric columns
-- Column names may contain spaces — always wrap them in double quotes: "Column Name"
-- If no filter applies, return: SELECT * FROM excel_table LIMIT 100
-- Never use CAST — columns are already numeric where applicable
+STRICT RULES:
+- Return ONLY valid DuckDB SQL. No explanation, no markdown, no backticks, no preamble.
+- Column names with spaces MUST be wrapped in double quotes: "Column Name"
+- For text/category filters use: LOWER("Col") LIKE '%value%'
+- For numeric filters use: "Col" > 100  (columns are already numeric — never use CAST)
+- Combine multiple conditions with AND
+- NEVER return SELECT * with no WHERE clause unless the user explicitly asks to list/show ALL products
+- If the user asks to browse, list, or show all products with no filter: SELECT * FROM excel_table ORDER BY 1
+- If some conditions exist, always use WHERE. Never add LIMIT — pagination is handled separately.
+- If 0 conditions can be extracted and user wants everything: SELECT * FROM excel_table ORDER BY 1
 
-EXAMPLE:
+EXAMPLES:
 User: IC with cpu arm cortex-m0+ and flash > 500 and ram > 200
 SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m0+%' AND "Flash memory (kByte)" > 500 AND "RAM (kByte)" > 200
+
+User: show all active products with uart >= 2
+SQL: SELECT * FROM excel_table WHERE LOWER("Status") = 'active' AND "UART" >= 2
+
+User: list cortex-m4 devices
+SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m4%' ORDER BY 1
+
+User: list the products in the sheet
+SQL: SELECT * FROM excel_table ORDER BY 1
+
+User: all products
+SQL: SELECT * FROM excel_table ORDER BY 1
 """
                                 raw_sql = llm_groq.call_groq(
                                     sql_system, question,
@@ -683,14 +760,19 @@ SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m0+%' AND "Flash memory
 
                 # ── Build system prompt ──
                 if excel_hits:
+                    total_matched_for_prompt = len(st.session_state.excel_filtered_df.get(excel_source, []))
+                    current_off_for_prompt   = st.session_state.excel_page_offset.get(excel_source, 0)
+                    end_row_for_prompt       = min(current_off_for_prompt + EXCEL_PAGE_SIZE, total_matched_for_prompt)
                     system_msg = (
                         "You are a helpful data analyst. "
-                        "The context contains paginated tabular data from an Excel file. "
-                        "It shows which page you are on and how many total rows matched. "
-                        "Answer based strictly on the rows provided. "
-                        "If the user asks for 'next', acknowledge and describe what is shown. "
-                        "If 0 rows matched, say so clearly and suggest alternatives from available data. "
-                        "Never say data is missing — state clearly what page and how many rows remain."
+                        f"The data was filtered from an Excel file using SQL. "
+                        f"Total rows matched by the filter: {total_matched_for_prompt}. "
+                        f"Currently showing rows {current_off_for_prompt + 1}–{end_row_for_prompt}. "
+                        "Summarize what the shown rows contain — list product names, key specs, or patterns. "
+                        "If 0 rows matched, say clearly that no products meet ALL the criteria and suggest "
+                        "relaxing one condition (e.g. lower flash/RAM requirement or different CPU family). "
+                        "Do NOT say 'end of data' or 'no more pages' — the UI already shows that. "
+                        "Do NOT repeat the raw table — describe it concisely in 2–5 sentences."
                     )
                 else:
                     system_msg = "You are a helpful expert. Answer strictly based on the context provided."
@@ -721,4 +803,4 @@ SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m0+%' AND "Flash memory
                         )
                         st.text(doc[:200] + "...")
 
-    st.session_state.messages.append({"role": "assistant", "content": answer})
+    st.session_state.messages.append({"role": "assistant", "content": answer or ""})
