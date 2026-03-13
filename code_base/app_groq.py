@@ -75,7 +75,7 @@ def check_password():
             login_col1, login_col2, login_col3 = st.columns([1, 2, 1])
             with login_col2:
                 submitted = st.form_submit_button(
-                    "🚀 Login",
+                    "🚀 Login to SyBot",
                     use_container_width=True,
                     type="primary"
                 )
@@ -336,7 +336,7 @@ with st.sidebar:
         ],
         index=0
     )
-    top_k = st.slider("Top-K Context Chunks", 1, 10, 3)
+    top_k = st.slider("Top-K Context Chunks", 1, 20, 10)
 
     st.markdown("---")
     st.subheader("Data Connectors")
@@ -441,19 +441,41 @@ if ingest_btn and uploads:
     progress_bar = st.progress(0)
     mode_text = "temporary session" if st.session_state.ingestion_mode == "temporary" else "permanent database"
     st.info(f"Ingesting {len(uploads)} file(s) to {mode_text}...")
+    # Check which files are already ingested (avoid re-processing on re-click)
+    try:
+        existing_sources = {
+            m.get("source") for m in collection.get(include=["metadatas"])["metadatas"]
+        }
+    except Exception:
+        existing_sources = set()
+
+    skipped = 0
     for idx, up in enumerate(uploads):
+        fname_check = up.name
+        if fname_check in existing_sources and not any(
+            fname_check.lower().endswith(ext) for ext in EXCEL_EXTENSIONS
+        ):
+            st.caption(f"⏭️ Skipped `{fname_check}` — already in database.")
+            skipped += 1
+            progress_bar.progress((idx + 1) / len(uploads))
+            continue
+
         text, fname, raw_bytes = file_readers.extract_text_from_upload(up)
         meta = {"source": fname, "ingestion_mode": st.session_state.ingestion_mode}
         if any(fname.lower().endswith(ext) for ext in EXCEL_EXTENSIONS):
             st.session_state.excel_file_store[fname] = raw_bytes
-            st.caption(f"📊 Stored raw Excel bytes for `{fname}`")
+            st.caption(f"📊 Stored Excel `{fname}` for smart filtering")
         if st.session_state.ingestion_mode == "temporary":
             meta["session_id"] = st.session_state.session_id
             meta["ingestion_time"] = datetime.now().isoformat()
         count = chroma_store.add_document(collection, text, meta)
         total_chunks += count
         progress_bar.progress((idx + 1) / len(uploads))
-    st.success(f"Ingested {len(uploads)} files ({total_chunks} chunks) to {mode_text}.")
+
+    msg = f"Ingested {len(uploads) - skipped} files ({total_chunks} chunks) to {mode_text}."
+    if skipped:
+        msg += f" {skipped} file(s) skipped (already ingested)."
+    st.success(msg)
 
 
 # ------------------------------------------------------------------
@@ -506,301 +528,301 @@ if question:
                 excel_source = early_excel_source
             else:
                 # ── 1. Similarity search ──
-                hits = chroma_store.retrieve(collection, question, top_k=top_k)
+                # Retrieve more chunks when multiple files are ingested
+                # Excel filtering uses DuckDB — ChromaDB only needed for docs
+                effective_top_k = max(top_k, 15)
+                hits = chroma_store.retrieve(collection, question, top_k=effective_top_k)
                 excel_hits  = []
                 excel_source = None
                 raw_bytes   = b""
 
-            # ── If ChromaDB returned nothing, try direct Excel store ──
-            answer = None
-            if not hits or all(h[0] == [] for h in hits):
-                stored_excel = st.session_state.get("excel_file_store", {})
-                if stored_excel:
-                    first_excel  = next(iter(stored_excel))
-                    hits         = [("", {"source": first_excel, "ingestion_mode": "permanent"}, 0.0, "")]
-                    excel_hits   = [(h[0], h[1], h[2], h[3]) for h in hits]
-                    excel_source = first_excel
-                    raw_bytes    = stored_excel[first_excel]
-                    st.caption(f"🔍 Routing query directly to `{first_excel}`")
-                else:
-                    st.caption("ℹ️ No documents found in the database. Answering from general knowledge.")
-                    answer = llm_groq.call_groq(
-                        "You are a helpful assistant. Answer the user's question using your general knowledge. "
-                        "If the question is about a specific private document or internal data, politely mention "
-                        "that no documents have been uploaded yet and ask the user to upload relevant files.",
-                        question,
-                        model=selected_model,
-                        api_key=active_key
-                    )
-                    st.markdown(answer)
+            # ── Special: list all ingested documents ──
+            LIST_TRIGGERS = ["what documents", "which documents", "what files",
+                             "which files", "list documents", "list files",
+                             "what do you have", "what have you", "show documents",
+                             "show files", "uploaded files", "ingested"]
+            if any(t in question.lower() for t in LIST_TRIGGERS):
+                try:
+                    all_meta    = collection.get(include=["metadatas"])["metadatas"]
+                    all_sources = sorted({m.get("source", "unknown") for m in all_meta})
+                    excel_files = list(st.session_state.get("excel_file_store", {}).keys())
+                    # Add Excel files not yet in ChromaDB
+                    for xf in excel_files:
+                        if xf not in all_sources:
+                            all_sources.append(xf)
+                    if all_sources:
+                        lines = ["I have the following documents in my knowledge base:\n"]
+                        for i, src in enumerate(sorted(all_sources), 1):
+                            ext  = src.rsplit(".", 1)[-1].upper() if "." in src else "FILE"
+                            icon = {"XLSX":"📊","XLS":"📊","PDF":"📄","DOCX":"📝",
+                                    "TXT":"📃","EML":"📧","PPTX":"📑","CSV":"📊"}.get(ext, "📁")
+                            lines.append(f"{icon} {i}. {src}")
+                        answer = "\n".join(lines)
+                    else:
+                        answer = "No documents have been ingested yet. Please upload files using the sidebar."
+                except Exception as e:
+                    answer = f"Could not retrieve document list: {e}"
+                st.markdown(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+                st.stop()
 
-            # ── Process hits (Excel or non-Excel) ──
-            if answer is None and hits and not all(h[0] == [] for h in hits):
-                if not excel_hits:
-                    excel_hits = [(doc, meta, dist, _id) for doc, meta, dist, _id in hits if is_excel_source(meta)]
-                context_text = ""
+            # ==============================================================
+            # UNIVERSAL PROCESSING ENGINE
+            # Strategy:
+            #   1. Always search ChromaDB across ALL documents (high top_k)
+            #   2. If Excel file exists → always run DuckDB filter in parallel
+            #   3. Combine ALL context (Excel rows + doc chunks) into one prompt
+            #   4. Let the LLM synthesize the answer from everything available
+            #   5. If nothing found anywhere → fall back to general knowledge
+            # User never needs to know or specify which file has what.
+            # ==============================================================
+            answer       = None
+            context_text = ""
+            system_msg   = ""
+            stored_excel = st.session_state.get("excel_file_store", {})
 
-                if excel_hits:
-                    if not excel_source:
-                        excel_source = excel_hits[0][1].get("source")
-                    if not raw_bytes:
-                        raw_bytes = st.session_state.get("excel_file_store", {}).get(excel_source, b"")
+            # ── Collect all context parts ──
+            context_parts = []   # list of (label, text) tuples
 
-                    if raw_bytes:
-                        # ── Step 1: Load & cache DataFrame + register in DuckDB ──
+            # ──────────────────────────────────────────────
+            # PART A: Excel DuckDB filter (if any Excel exists)
+            # ──────────────────────────────────────────────
+            if stored_excel:
+                for xls_fname, xls_bytes in stored_excel.items():
+                    try:
                         MAX_EXCEL_ROWS = 100_000
-                        if excel_source not in st.session_state.excel_df_cache:
-                            with st.spinner("📂 Loading Excel into memory..."):
-                                dfs        = pd.read_excel(io.BytesIO(raw_bytes), sheet_name=None,
+
+                        # Load & cache
+                        if xls_fname not in st.session_state.excel_df_cache:
+                            with st.spinner(f"📂 Loading `{xls_fname}`..."):
+                                dfs        = pd.read_excel(io.BytesIO(xls_bytes), sheet_name=None,
                                                            dtype=str, keep_default_na=False)
-                                sheet_name = list(dfs.keys())[0]
-                                sheet_df   = dfs[sheet_name].fillna("").reset_index(drop=True)
-                                if len(sheet_df) > MAX_EXCEL_ROWS:
-                                    sheet_df = sheet_df.head(MAX_EXCEL_ROWS)
-                                    st.caption(f"⚠️ Large file: capped at {MAX_EXCEL_ROWS:,} rows.")
-                                st.session_state.excel_df_cache[excel_source] = {
-                                    "sheet_name": sheet_name,
-                                    "df": sheet_df
+                                sname      = list(dfs.keys())[0]
+                                sdf        = dfs[sname].fillna("").reset_index(drop=True)
+                                if len(sdf) > MAX_EXCEL_ROWS:
+                                    sdf = sdf.head(MAX_EXCEL_ROWS)
+                                st.session_state.excel_df_cache[xls_fname] = {
+                                    "sheet_name": sname, "df": sdf
                                 }
-                                # Register in DuckDB — coerce numeric columns automatically
-                                con = duckdb.connect()
-                                # Try to cast numeric-looking columns for proper SQL comparisons
-                                df_for_duck = sheet_df.copy()
-                                for col in df_for_duck.columns:
+                                con         = duckdb.connect()
+                                df_duck     = sdf.copy()
+                                for col in df_duck.columns:
                                     try:
-                                        numeric = pd.to_numeric(df_for_duck[col], errors='coerce')
-                                        if numeric.notna().sum() > len(df_for_duck) * 0.5:
-                                            df_for_duck[col] = numeric
+                                        num = pd.to_numeric(df_duck[col], errors="coerce")
+                                        if num.notna().sum() > len(df_duck) * 0.5:
+                                            df_duck[col] = num
                                     except Exception:
                                         pass
-                                con.register("excel_table", df_for_duck)
-                                st.session_state.excel_duckdb_con[excel_source] = con
+                                con.register("excel_table", df_duck)
+                                st.session_state.excel_duckdb_con[xls_fname] = con
                         else:
-                            sheet_df   = st.session_state.excel_df_cache[excel_source]["df"]
-                            sheet_name = st.session_state.excel_df_cache[excel_source]["sheet_name"]
-                            con        = st.session_state.excel_duckdb_con.get(excel_source)
+                            sdf   = st.session_state.excel_df_cache[xls_fname]["df"]
+                            sname = st.session_state.excel_df_cache[xls_fname]["sheet_name"]
+                            con   = st.session_state.excel_duckdb_con.get(xls_fname)
                             if con is None:
-                                # Rebuild DuckDB connection from cache
-                                con = duckdb.connect()
-                                df_for_duck = sheet_df.copy()
-                                for col in df_for_duck.columns:
+                                con     = duckdb.connect()
+                                df_duck = sdf.copy()
+                                for col in df_duck.columns:
                                     try:
-                                        numeric = pd.to_numeric(df_for_duck[col], errors='coerce')
-                                        if numeric.notna().sum() > len(df_for_duck) * 0.5:
-                                            df_for_duck[col] = numeric
+                                        num = pd.to_numeric(df_duck[col], errors="coerce")
+                                        if num.notna().sum() > len(df_duck) * 0.5:
+                                            df_duck[col] = num
                                     except Exception:
                                         pass
-                                con.register("excel_table", df_for_duck)
-                                st.session_state.excel_duckdb_con[excel_source] = con
+                                con.register("excel_table", df_duck)
+                                st.session_state.excel_duckdb_con[xls_fname] = con
 
-                        total_file = len(sheet_df)
-                        columns    = sheet_df.columns.tolist()
-
-                        # ── Step 2: Detect pagination or new query ──
+                        # Pagination or new filter?
                         page_intent, page_arg = detect_pagination(question)
-                        cached_df = st.session_state.excel_filtered_df.get(excel_source)
+                        cached_df             = st.session_state.excel_filtered_df.get(xls_fname)
 
                         if page_intent and cached_df is not None:
-                            # ── Pagination on existing result ──
                             filtered_df   = cached_df
                             total_matched = len(filtered_df)
-                            current_off   = st.session_state.excel_page_offset.get(excel_source, 0)
-                            if page_intent == 'next':
-                                step = page_arg if page_arg else EXCEL_PAGE_SIZE
-                                # Clamp to last valid page start (not last row index)
-                                last_page_start = max(0, ((total_matched - 1) // EXCEL_PAGE_SIZE) * EXCEL_PAGE_SIZE)
-                                new_off = min(current_off + step, last_page_start)
-                            elif page_intent == 'prev':
+                            current_off   = st.session_state.excel_page_offset.get(xls_fname, 0)
+                            if page_intent == "next":
+                                step        = page_arg if page_arg else EXCEL_PAGE_SIZE
+                                last_start  = max(0, ((total_matched - 1) // EXCEL_PAGE_SIZE) * EXCEL_PAGE_SIZE)
+                                new_off     = min(current_off + step, last_start)
+                            elif page_intent == "prev":
                                 new_off = max(0, current_off - EXCEL_PAGE_SIZE)
-                            elif page_intent == 'page':
+                            elif page_intent == "page":
                                 new_off = min((page_arg - 1) * EXCEL_PAGE_SIZE, max(0, total_matched - 1))
                             else:
                                 new_off = 0
-                            st.session_state.excel_page_offset[excel_source] = new_off
-
+                            st.session_state.excel_page_offset[xls_fname] = new_off
                         else:
-                            # ── Step 3: NL → SQL via Groq ──
-                            with st.spinner("🧠 Generating SQL from your question..."):
-                                col_schema = ", ".join(f'"{c}"' for c in columns)
-                                # Build sample values per column so LLM can match exact text
-                                sample_vals = {}
-                                for col in columns:
-                                    uniq = sheet_df[col].replace("", None).dropna().unique()[:5].tolist()
-                                    if uniq:
-                                        sample_vals[col] = uniq
-                                schema_detail = "\n".join(
-                                    f'  "{c}": e.g. {sample_vals.get(c, [])}' for c in columns
-                                )
-
-                                sql_system = f"""You are a DuckDB SQL expert.
-Table name: excel_table
+                            # NL → SQL
+                            columns     = sdf.columns.tolist()
+                            sample_vals = {
+                                col: sdf[col].replace("", None).dropna().unique()[:5].tolist()
+                                for col in columns
+                            }
+                            schema_detail = "\n".join(
+                                f'  "{c}": e.g. {sample_vals.get(c, [])}' for c in columns
+                            )
+                            sql_system = f"""You are a DuckDB SQL expert.
+Table name: excel_table  (from file: {xls_fname})
 Columns and sample values:
 {schema_detail}
 
 STRICT RULES:
-- Return ONLY valid DuckDB SQL. No explanation, no markdown, no backticks, no preamble.
-- Column names with spaces MUST be wrapped in double quotes: "Column Name"
-- For text/category filters use: LOWER("Col") LIKE '%value%'
-- For numeric filters use: "Col" > 100  (columns are already numeric — never use CAST)
-- Combine multiple conditions with AND
-- NEVER return SELECT * with no WHERE clause unless the user explicitly asks to list/show ALL products
-- If the user asks to browse, list, or show all products with no filter: SELECT * FROM excel_table ORDER BY 1
-- If some conditions exist, always use WHERE. Never add LIMIT — pagination is handled separately.
-- If 0 conditions can be extracted and user wants everything: SELECT * FROM excel_table ORDER BY 1
+- Return ONLY valid DuckDB SQL. No explanation, no markdown, no backticks.
+- Wrap column names with spaces in double quotes: "Column Name"
+- Text filters: LOWER("Col") LIKE '%value%'
+- Numeric filters: "Col" > 100  (never use CAST — columns are pre-cast)
+- Always use WHERE for specific filters. No LIMIT — pagination handles it.
+- If query is general/list all: SELECT * FROM excel_table ORDER BY 1
+- If query is unrelated to this file: SELECT * FROM excel_table LIMIT 0
 
 EXAMPLES:
 User: IC with cpu arm cortex-m0+ and flash > 500 and ram > 200
 SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m0+%' AND "Flash memory (kByte)" > 500 AND "RAM (kByte)" > 200
-
-User: show all active products with uart >= 2
-SQL: SELECT * FROM excel_table WHERE LOWER("Status") = 'active' AND "UART" >= 2
-
-User: list cortex-m4 devices
-SQL: SELECT * FROM excel_table WHERE LOWER("CPU") LIKE '%m4%' ORDER BY 1
-
-User: list the products in the sheet
+User: list all products
 SQL: SELECT * FROM excel_table ORDER BY 1
-
-User: all products
-SQL: SELECT * FROM excel_table ORDER BY 1
+User: what is the capital of France
+SQL: SELECT * FROM excel_table LIMIT 0
 """
-                                raw_sql = llm_groq.call_groq(
+                            with st.spinner(f"🧠 Querying `{xls_fname}`..."):
+                                raw_sql   = llm_groq.call_groq(
                                     sql_system, question,
-                                    model=selected_model,
-                                    api_key=active_key
+                                    model=selected_model, api_key=active_key
                                 )
-                                # Clean up LLM output (strip markdown fences if any)
                                 import re as _re
-                                sql_query = _re.sub(r'```(?:sql)?\s*', '', raw_sql, flags=_re.IGNORECASE)
-                                sql_query = _re.sub(r'```', '', sql_query).strip()
-                                st.caption(f"🔍 Generated SQL: `{sql_query}`")
+                                sql_query = _re.sub(r"```(?:sql)?\s*", "", raw_sql, flags=_re.IGNORECASE)
+                                sql_query = _re.sub(r"```", "", sql_query).strip()
+                                st.caption(f"🔍 `{xls_fname}` SQL: `{sql_query}`")
 
-                            # ── Step 4: Execute SQL with DuckDB ──
                             try:
                                 filtered_df = con.execute(sql_query).df().fillna("").reset_index(drop=True)
                             except Exception as sql_err:
-                                st.warning(f"⚠️ SQL failed (`{sql_err}`), falling back to text search.")
-                                # Vectorised fallback
-                                mask = sheet_df.apply(
+                                st.warning(f"⚠️ SQL failed on `{xls_fname}`: {sql_err}. Using text search.")
+                                mask        = sdf.apply(
                                     lambda row: row.astype(str).str.contains(question, case=False, na=False).any(),
                                     axis=1
                                 )
-                                filtered_df = sheet_df[mask].reset_index(drop=True)
+                                filtered_df = sdf[mask].reset_index(drop=True)
 
                             new_off       = 0
                             total_matched = len(filtered_df)
+                            st.session_state.excel_filtered_df[xls_fname]  = filtered_df
+                            st.session_state.excel_last_query[xls_fname]   = question
+                            st.session_state.excel_page_offset[xls_fname]  = 0
 
-                            # Cache full result for pagination
-                            st.session_state.excel_filtered_df[excel_source] = filtered_df
-                            st.session_state.excel_last_query[excel_source]  = question
-                            st.session_state.excel_page_offset[excel_source] = 0
-
-                        # ── Step 5: Slice one page ──
-                        filtered_df   = st.session_state.excel_filtered_df[excel_source]
+                        # Slice page
+                        filtered_df   = st.session_state.excel_filtered_df.get(xls_fname, pd.DataFrame())
                         total_matched = len(filtered_df)
-                        new_off       = st.session_state.excel_page_offset.get(excel_source, 0)
-                        new_off       = min(new_off, max(0, total_matched - EXCEL_PAGE_SIZE))
-                        st.session_state.excel_page_offset[excel_source] = new_off
-                        page_df       = filtered_df.iloc[new_off: new_off + EXCEL_PAGE_SIZE]
 
-                        # Load sheet info from cache
-                        if excel_source in st.session_state.excel_df_cache:
-                            sheet_name = st.session_state.excel_df_cache[excel_source]["sheet_name"]
-                            total_file = len(st.session_state.excel_df_cache[excel_source]["df"])
-                        else:
-                            sheet_name = excel_source
-                            total_file = total_matched
+                        if total_matched > 0:
+                            new_off = st.session_state.excel_page_offset.get(xls_fname, 0)
+                            new_off = min(new_off, max(0, total_matched - EXCEL_PAGE_SIZE))
+                            st.session_state.excel_page_offset[xls_fname] = new_off
+                            page_df = filtered_df.iloc[new_off: new_off + EXCEL_PAGE_SIZE]
+                            end_row = min(new_off + EXCEL_PAGE_SIZE, total_matched)
 
-                        # ── Step 6: Build context string for LLM ──
-                        context_text = df_page_to_context(
-                            page_df, sheet_name,
-                            offset=new_off,
-                            total_matched=total_matched,
-                            total_file=total_file,
-                            page_size=EXCEL_PAGE_SIZE
-                        )
-
-                        end_row = min(new_off + EXCEL_PAGE_SIZE, total_matched)
-                        st.info(
-                            f"📊 `{excel_source}`: **{total_matched}** rows matched | "
-                            f"Showing **{new_off + 1}–{end_row}**"
-                            + (f" | Say **'next'** for more" if end_row < total_matched else " | ✅ All matched rows shown")
-                        )
-
-                        # ── Step 7: Show interactive table in UI ──
-                        if not page_df.empty:
-                            with st.expander("📋 View filtered data as table", expanded=True):
+                            st.info(
+                                f"📊 `{xls_fname}`: **{total_matched}** rows matched | "
+                                f"Showing **{new_off + 1}–{end_row}**" +
+                                (f" | Say **'next'** for more" if end_row < total_matched else " | ✅ All shown")
+                            )
+                            with st.expander(f"📋 `{xls_fname}` — filtered data", expanded=True):
                                 st.dataframe(page_df, use_container_width=True)
 
-                    else:
-                        st.warning(f"⚠️ Raw bytes not found for `{excel_source}`. Please re-ingest.")
-                        all_chunks = get_all_excel_chunks(collection, excel_source)
-                        if all_chunks:
-                            hits = all_chunks
+                            xls_context = df_page_to_context(
+                                page_df, sname,
+                                offset=new_off, total_matched=total_matched,
+                                total_file=len(sdf), page_size=EXCEL_PAGE_SIZE
+                            )
+                            context_parts.append((f"📊 Excel [{xls_fname}]", xls_context))
 
-                else:
-                    # ── Non-Excel: normal RAG flow ──
-                    sources_block = []
-                    total_chars   = 0
-                    from core.config import MAX_TOTAL_CONTEXT_CHARS
-                    for i, (doc, meta, dist, _id) in enumerate(hits, start=1):
-                        title          = meta.get("source", "Doc")
-                        ingestion_mode = meta.get("ingestion_mode", "permanent")
-                        mode_indicator = "⏰" if ingestion_mode == "temporary" else "📁"
-                        chunk_content  = llm_groq.summarize_chunk(doc, api_key=active_key)
-                        if i > 1 and total_chars + len(chunk_content) > MAX_TOTAL_CONTEXT_CHARS:
-                            st.caption(f"⚠️ Context limit reached at chunk {i}/{len(hits)}.")
-                            break
-                        sources_block.append(f"{mode_indicator} [S{i}] {title}\n{chunk_content}")
-                        total_chars += len(chunk_content)
-                    context_text = "\n\n".join(sources_block)
-                    # Cap for non-Excel too
-                    if len(context_text) > GROQ_MAX_CONTEXT_CHARS:
-                        context_text = context_text[:GROQ_MAX_CONTEXT_CHARS]
+                    except Exception as xls_err:
+                        st.warning(f"⚠️ Could not process `{xls_fname}`: {xls_err}")
 
-                # ── Build system prompt ──
-                if excel_hits:
-                    total_matched_for_prompt = len(st.session_state.excel_filtered_df.get(excel_source, []))
-                    current_off_for_prompt   = st.session_state.excel_page_offset.get(excel_source, 0)
-                    end_row_for_prompt       = min(current_off_for_prompt + EXCEL_PAGE_SIZE, total_matched_for_prompt)
-                    system_msg = (
-                        "You are a helpful data analyst. "
-                        f"The data was filtered from an Excel file using SQL. "
-                        f"Total rows matched by the filter: {total_matched_for_prompt}. "
-                        f"Currently showing rows {current_off_for_prompt + 1}–{end_row_for_prompt}. "
-                        "Summarize what the shown rows contain — list product names, key specs, or patterns. "
-                        "If 0 rows matched, say clearly that no products meet ALL the criteria and suggest "
-                        "relaxing one condition (e.g. lower flash/RAM requirement or different CPU family). "
-                        "Do NOT say 'end of data' or 'no more pages' — the UI already shows that. "
-                        "Do NOT repeat the raw table — describe it concisely in 2–5 sentences."
-                    )
-                else:
-                    system_msg = "You are a helpful expert. Answer strictly based on the context provided."
+            # ──────────────────────────────────────────────
+            # PART B: ChromaDB RAG (ALL non-Excel documents)
+            # ──────────────────────────────────────────────
+            # Deduplicate: max 2 chunks per source file to spread context across all docs
+            _seen_sources  = {}
+            non_excel_hits = []
+            for doc, meta, dist, _id in hits:
+                if is_excel_source(meta) or not doc:
+                    continue
+                src = meta.get("source", "")
+                _seen_sources[src] = _seen_sources.get(src, 0) + 1
+                if _seen_sources[src] <= 2:   # max 2 chunks per file
+                    non_excel_hits.append((doc, meta, dist, _id))
+            if non_excel_hits:
+                # No summarize_chunk — that made 1 Groq call per chunk (15+ calls = huge delay).
+                # ChromaDB already returns the most relevant chunks via similarity search.
+                # Just use the raw chunk text directly — it's already the right content.
+                CHAR_BUDGET   = GROQ_MAX_CONTEXT_CHARS // 2   # share budget with Excel context
+                sources_block = []
+                total_chars   = 0
+                for i, (doc, meta, dist, _id) in enumerate(non_excel_hits, start=1):
+                    title          = meta.get("source", "Doc")
+                    ingestion_mode = meta.get("ingestion_mode", "permanent")
+                    mode_indicator = "⏰" if ingestion_mode == "temporary" else "📁"
+                    chunk_content  = doc[:3000]   # cap each chunk at 3000 chars
+                    if total_chars + len(chunk_content) > CHAR_BUDGET:
+                        st.caption(f"ℹ️ Using top {i-1} of {len(non_excel_hits)} document chunks.")
+                        break
+                    sources_block.append(f"{mode_indicator} [S{i}] {title}\n{chunk_content}")
+                    total_chars += len(chunk_content)
+                doc_context = "\n\n".join(sources_block)
+                context_parts.append(("📄 Documents [PDF/TXT/DOCX/EML/etc.]", doc_context))
 
-                # ── FINAL hard cap before sending to Groq ──
+            # ──────────────────────────────────────────────
+            # PART C: Assemble final context + generate answer
+            # ──────────────────────────────────────────────
+            if context_parts:
+                # Merge all parts with clear section labels
+                merged = []
+                for label, text in context_parts:
+                    merged.append(f"=== {label} ===\n{text}")
+                context_text = "\n\n".join(merged)
+
                 if len(context_text) > GROQ_MAX_CONTEXT_CHARS:
                     context_text = context_text[:GROQ_MAX_CONTEXT_CHARS]
-                    st.caption("⚠️ Context hard-capped to fit Groq token limit.")
+                    st.caption("⚠️ Context capped to fit model token limit.")
 
-                user_msg = f"Context:\n{context_text}\n\nQuestion: {question}"
-
-                answer = llm_groq.call_groq(
-                    system_msg, user_msg,
-                    model=selected_model,
-                    api_key=active_key
+                system_msg = (
+                    "You are a helpful expert assistant with access to multiple data sources. "
+                    "The context below may include filtered Excel/tabular data AND text from documents "
+                    "(PDFs, manuals, datasheets, notes, emails, etc.). "
+                    "Answer the user's question by synthesizing ALL relevant information from ALL sources. "
+                    "Clearly reference which source your answer comes from when helpful. "
+                    "For Excel data: summarize matching rows — product names, specs, patterns. "
+                    "For documents: answer based on the actual text content. "
+                    "If 0 Excel rows matched, say so and suggest relaxing the filter criteria. "
+                    "Never say data is missing if it is present in the context."
                 )
-
+                user_msg = f"Context:\n{context_text}\n\nQuestion: {question}"
+                answer   = llm_groq.call_groq(
+                    system_msg, user_msg,
+                    model=selected_model, api_key=active_key
+                )
                 st.markdown(answer)
 
-                with st.expander("View Sources"):
+                # Sources expander
+                with st.expander("📂 View Sources"):
+                    for label, _ in context_parts:
+                        st.caption(label)
                     for i, (doc, meta, dist, _) in enumerate(hits, start=1):
-                        ingestion_mode = meta.get("ingestion_mode", "permanent")
-                        mode_text  = "(Temporary)" if ingestion_mode == "temporary" else "(Permanent)"
-                        excel_tag  = "📊 Excel" if is_excel_source(meta) else ""
-                        st.caption(
-                            f"Source {i} {mode_text} {excel_tag}: "
-                            f"{meta.get('source')} (Dist: {dist:.3f})"
-                        )
-                        st.text(doc[:200] + "...")
+                        if not is_excel_source(meta) and doc:
+                            ingestion_mode = meta.get("ingestion_mode", "permanent")
+                            mode_text      = "(Temp)" if ingestion_mode == "temporary" else "(Perm)"
+                            st.caption(f"  📄 {mode_text} {meta.get('source')} (dist: {dist:.3f})")
+                            st.text(doc[:150] + "...")
+
+            else:
+                # Nothing found anywhere — general knowledge
+                st.caption("ℹ️ No relevant data found. Answering from general knowledge.")
+                answer = llm_groq.call_groq(
+                    "You are a helpful assistant. Answer the user's question using your general knowledge. "
+                    "If the question is about a specific private document or data, politely ask them to upload it.",
+                    question,
+                    model=selected_model, api_key=active_key
+                )
+                st.markdown(answer)
 
     st.session_state.messages.append({"role": "assistant", "content": answer or ""})
