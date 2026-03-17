@@ -287,7 +287,10 @@ with st.sidebar:
         """)
 
     st.subheader("API Setup")
-    secret_key = st.secrets.get("GROQ_API_KEY")
+    try:
+        secret_key = st.secrets["GROQ_API_KEY"]
+    except Exception:
+        secret_key = None
     if secret_key:
         st.success("✅ API Key loaded")
         active_key = secret_key
