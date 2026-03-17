@@ -233,10 +233,6 @@ if st.query_params.get("clear_chat"):
     st.query_params.clear()
 
 def get_base64_image(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-def get_base64_image(path):
     base_dir = os.path.dirname(__file__)
     full_path = os.path.join(base_dir, path)
     with open(full_path, "rb") as f:
